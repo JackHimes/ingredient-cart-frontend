@@ -28,44 +28,44 @@ export default function Page() {
 
     // Check if the 'code' parameter is present in the URL
     const authorizationCode = getQueryParam("code");
-    console.log(authorizationCode?.toString());
 
-    const fetchData = async () => {
-      console.log("authorizationCode");
-      console.log(authorizationCode);
-      console.log("REDIRECT_URI");
-      console.log(process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI);
-      const redirectURI =
-        process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI?.toString();
+    let storeToken;
+    const storeTokenString = localStorage.getItem("customer_access_token");
 
-      if (authorizationCode) {
-        try {
-          const response = await axios.post(
-            "https://api.kroger.com/v1/connect/oauth2/token",
-            `grant_type=authorization_code&code=${encodeURIComponent(
-              authorizationCode
-            )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
-            {
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
-              },
-            }
-          );
+    if (storeTokenString !== null) {
 
-          console.log("SUCCESS, VERY NICE!");
-          console.log(response.data);
+      // TODO: CHECK DATABASE FOR ACCESS TOKEN
+      storeToken = JSON.parse(storeTokenString);
+    } else {
+      const fetchAccessToken = async () => {
+        if (authorizationCode) {
+          try {
+            const response = await axios.post(
+              "https://api.kroger.com/v1/connect/oauth2/token",
+              `grant_type=authorization_code&code=${encodeURIComponent(
+                authorizationCode
+              )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
+              {
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
+                },
+              }
+            );
 
-          const responseDataString = JSON.stringify(response.data);
+            const responseDataString = JSON.stringify(response.data);
 
-          localStorage.setItem("customer_access_token", responseDataString);
-        } catch (error) {
-          console.error(error);
+            localStorage.setItem("customer_access_token", responseDataString);
+          } catch (error) {
+            console.error(error);
+          }
         }
-      }
-    };
+      };
 
-    fetchData();
+      fetchAccessToken();
+      // TODO: STORE TOKEN IN DB
+      
+    }
   }, []);
 
   const handleItemClick = (item: string) => {
