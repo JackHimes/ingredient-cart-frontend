@@ -13,11 +13,14 @@ import {
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navigation";
 import axios from "axios";
+import jwt from "jsonwebtoken"
 import * as dotenv from "dotenv";
+
 dotenv.config();
 
 export default function Page() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  let storeTokenObjectString : string
 
   useEffect(() => {
     // Function to extract query parameters from the URL
@@ -30,41 +33,75 @@ export default function Page() {
     const authorizationCode = getQueryParam("code");
 
     let storeToken;
-    const storeTokenString = localStorage.getItem("customer_access_token");
+    storeTokenObjectString = localStorage.getItem("customer_access_token") as string;
 
-    if (storeTokenString !== null) {
+    const fetchAccessToken = async () => {
+      if (authorizationCode) {
+        try {
+          const response = await axios.post(
+            "https://api.kroger.com/v1/connect/oauth2/token",
+            `grant_type=authorization_code&code=${encodeURIComponent(
+              authorizationCode
+            )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
+            {
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
+              },
+            }
+          );
 
-      // TODO: CHECK DATABASE FOR ACCESS TOKEN
-      storeToken = JSON.parse(storeTokenString);
-    } else {
-      const fetchAccessToken = async () => {
-        if (authorizationCode) {
-          try {
-            const response = await axios.post(
-              "https://api.kroger.com/v1/connect/oauth2/token",
-              `grant_type=authorization_code&code=${encodeURIComponent(
-                authorizationCode
-              )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
-              {
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                  Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
-                },
-              }
-            );
+          const responseDataString = JSON.stringify(response.data);
 
-            const responseDataString = JSON.stringify(response.data);
-
-            localStorage.setItem("customer_access_token", responseDataString);
-          } catch (error) {
-            console.error(error);
-          }
+          localStorage.setItem("customer_access_token", responseDataString);
+        } catch (error) {
+          console.error(error);
         }
-      };
+      }
+    };
 
+    const refreshAccessToken = async () => {
+      const refreshToken = JSON.parse(storeTokenObjectString).refresh_token
+        try {
+          const response = await axios.post(
+            "https://api.kroger.com/v1/connect/oauth2/token",
+            `grant_type=refresh_token&refresh_token=${encodeURIComponent(
+              refreshToken
+            )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
+            {
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
+              },
+            }
+          );
+
+          const responseDataString = JSON.stringify(response.data);
+
+          localStorage.setItem("customer_access_token", responseDataString);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+    if (storeTokenObjectString !== null) {
+      // TODO: CHECK DATABASE FOR ACCESS TOKEN
+      storeToken = JSON.parse(storeTokenObjectString);
+      const decodedToken = jwt.decode(storeToken.access_token) as KrogerAccessJwt
+      if (decodedToken.exp < (Math.floor(Date.now() / 1000))) {
+        console.log("TOKEN HAS BEEN REFRESHED");
+        // TODO: MAKE REFRESH API CALL HERE
+        
+        refreshAccessToken();
+      } else {
+        console.log("TOKEN IS BUENO");
+        
+      }
+    } else {
+      console.log("NO TOKEN, GETTING A NEW ONE");
+      
       fetchAccessToken();
       // TODO: STORE TOKEN IN DB
-      
     }
   }, []);
 
