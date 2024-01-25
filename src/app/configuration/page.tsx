@@ -15,12 +15,12 @@ import Navbar from "../components/Navigation";
 import axios from "axios";
 import jwt from "jsonwebtoken"
 import * as dotenv from "dotenv";
+import { fetchAccessToken, refreshAccessToken } from '../api/krogerAuth.tsx'
 
 dotenv.config();
 
 export default function Page() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  let storeTokenObjectString : string
 
   useEffect(() => {
     // Function to extract query parameters from the URL
@@ -29,80 +29,45 @@ export default function Page() {
       return urlParams.get(name);
     };
 
-    // Check if the 'code' parameter is present in the URL
-    const authorizationCode = getQueryParam("code");
-
-    let storeToken;
-    storeTokenObjectString = localStorage.getItem("customer_access_token") as string;
-
-    const fetchAccessToken = async () => {
-      if (authorizationCode) {
-        try {
-          const response = await axios.post(
-            "https://api.kroger.com/v1/connect/oauth2/token",
-            `grant_type=authorization_code&code=${encodeURIComponent(
-              authorizationCode
-            )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
-            {
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
-              },
-            }
-          );
-
-          const responseDataString = JSON.stringify(response.data);
-
-          localStorage.setItem("customer_access_token", responseDataString);
-        } catch (error) {
-          console.error(error);
+    const checkAndRefreshToken = async () => {
+      const storeTokenObjectString = localStorage.getItem("customer_access_token");
+      if (storeTokenObjectString) {
+        const storeToken = JSON.parse(storeTokenObjectString);
+        const decodedToken = jwt.decode(storeToken.access_token) as KrogerAccessJwt;
+        if (decodedToken.exp < Math.floor(Date.now() / 1000)) {
+          console.log("TOKEN HAS BEEN REFRESHED");
+          try {
+            const refreshedToken = await refreshAccessToken(
+              storeToken.refresh_token,
+              process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI as string
+            );
+            const responseDataString = JSON.stringify(refreshedToken);
+            localStorage.setItem("customer_access_token", responseDataString);
+          } catch (error) {
+            console.error("Error refreshing token:", error);
+          }
+        } else {
+          console.log("TOKEN IS BUENO");
+        }
+      } else {
+        console.log("NO TOKEN, GETTING A NEW ONE");
+        const authorizationCode = getQueryParam("code");
+        if (authorizationCode) {
+          try {
+            const tokenData = await fetchAccessToken(
+              authorizationCode,
+              process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI as string
+            );
+            const responseDataString = JSON.stringify(tokenData);
+            localStorage.setItem("customer_access_token", responseDataString);
+          } catch (error) {
+            console.error("Error fetching token:", error);
+          }
         }
       }
     };
 
-    const refreshAccessToken = async () => {
-      const refreshToken = JSON.parse(storeTokenObjectString).refresh_token
-        try {
-          const response = await axios.post(
-            "https://api.kroger.com/v1/connect/oauth2/token",
-            `grant_type=refresh_token&refresh_token=${encodeURIComponent(
-              refreshToken
-            )}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`,
-            {
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${process.env.NEXT_PUBLIC_KROGER_API_TOKEN}`,
-              },
-            }
-          );
-
-          const responseDataString = JSON.stringify(response.data);
-
-          localStorage.setItem("customer_access_token", responseDataString);
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-    if (storeTokenObjectString !== null) {
-      // TODO: CHECK DATABASE FOR ACCESS TOKEN
-      storeToken = JSON.parse(storeTokenObjectString);
-      const decodedToken = jwt.decode(storeToken.access_token) as KrogerAccessJwt
-      if (decodedToken.exp < (Math.floor(Date.now() / 1000))) {
-        console.log("TOKEN HAS BEEN REFRESHED");
-        // TODO: MAKE REFRESH API CALL HERE
-        
-        refreshAccessToken();
-      } else {
-        console.log("TOKEN IS BUENO");
-        
-      }
-    } else {
-      console.log("NO TOKEN, GETTING A NEW ONE");
-      
-      fetchAccessToken();
-      // TODO: STORE TOKEN IN DB
-    }
+    checkAndRefreshToken();
   }, []);
 
   const handleItemClick = (item: string) => {
