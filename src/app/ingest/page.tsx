@@ -9,10 +9,31 @@ import { ChangeEvent, useState } from "react";
 dotenv.config();
 
 export default function Page() {
+	
 	const [recipeUrl, setRecipeUrl] = useState<string>('');
+	
+	const ingestRecipe = async (scriptName: string) => {
+		// TODO: REPLACE WITH ACTUAL ENDPOINT
+		const endpoint = 'http://localhost:3333/tasks/scrape_recipe'
 
-	const ingestRecipe = () => {
-		console.log(recipeUrl);
+		axios.get(endpoint, {
+			params: {
+				recipeUrl: recipeUrl
+			},
+			headers: {
+				'accept': 'application/json'
+			}
+		})
+		.then(response => {
+			console.log("IT WORKED");
+			
+			console.log(response.data);
+			// Handle response data here
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			// Handle error here
+		});
 		
 	}
 
@@ -36,7 +57,7 @@ export default function Page() {
               errorMessage="Please enter a valid recipe"
               className="max-w-xs"
             />
-            <Button onClick={ingestRecipe}>Extract Ingredients!</Button>
+            <Button onClick={() => ingestRecipe("scrape_recipe")}>Extract Ingredients!</Button>
           </CardBody>
         </Card>
       </div>
