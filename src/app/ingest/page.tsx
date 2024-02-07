@@ -93,8 +93,35 @@ export default function Page() {
     }
   };
 
-  // const addProductsFromUpcs()
+  const addToCart = async (items: { upc: string }[]) => {
+    const payloadItems = items.map((item) => ({
+      upc: item.upc,
+      quantity: 1,
+      modality: "PICKUP",
+    }));
 
+    const payload = {
+      items: payloadItems,
+    };
+
+    console.log(payload);
+
+    try {
+      const response = await axios.put(
+        "https://api.kroger.com/v1/cart/add",
+        payload,
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${storedToken}`,
+          },
+        }
+      );
+      console.log(response.data);
+    } catch (error: any) {
+      console.error("Error adding to cart: ", error.message);
+    }
+  };
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setRecipeUrl(event.target.value);
   };
@@ -140,6 +167,9 @@ export default function Page() {
                   </Button>
                 </div>
               ))}
+              <Button onClick={() => addToCart(krogerFoodUpcs)}>
+                Add to Cart
+              </Button>
             </CardBody>
           </Card>
         )}
