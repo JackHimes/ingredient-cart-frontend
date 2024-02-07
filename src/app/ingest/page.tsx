@@ -10,7 +10,9 @@ dotenv.config();
 
 export default function Page() {
   let scrappedFoods: string[] = [];
-	let krogerFoodUpcs: string [] = [];
+  const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<
+    { item: string; upc: string }[]
+  >([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
 
@@ -39,18 +41,26 @@ export default function Page() {
       })
       .then((response) => {
         scrappedFoods = response.data.result.ingredients as string[];
-        searchItems(scrappedFoods);
+        getItemsUpcs(scrappedFoods);
       })
       .catch((error) => {
-        console.error("Error:", error);
-        // Handle error here
+        console.error("Error Ingesting Recipe:", error);
       });
   };
 
-  const searchItems = async (items: string[]): Promise<any> => {
+  const getItemsUpcs = async (items: string[]): Promise<any> => {
     try {
       for (const item of items) {
-        const url = `https://api.kroger.com/v1/products?filter.term=${encodeURIComponent(item)}`;
+        // Kroger only lets 8 terms per search
+        let processedItem = item;
+        if (item.split(" ").length > 8) {
+          console.log("Item is longer than 8 words:", item);
+          processedItem = item.split(" ").slice(0, 8).join(" ");
+        }
+
+        const url = `https://api.kroger.com/v1/products?filter.term=${encodeURIComponent(
+          processedItem
+        )}`;
 
         if (!storedToken) {
           console.error("Undefine Token");
@@ -64,22 +74,26 @@ export default function Page() {
           },
         });
 
-        // Handle response data for each item
-				if (response.data.data[0]){
-					krogerFoodUpcs.push(response.data.data[0].upc)
-				} else{
-					// TODO: HANDLE CASE WHEN NO ITEMS ARE FOUND IN SEARCH
-					console.log("NO ITEM FOUND");
-					
-				}
+        if (response.data.data[0]) {
+          setKrogerFoodUpcs((prevState) => [
+            ...prevState,
+            {
+              item: processedItem,
+              upc: response.data.data[0].upc,
+            },
+          ]);
+        } else {
+          // TODO: HANDLE CASE WHEN NO ITEMS ARE FOUND IN SEARCH
+          console.log("NO ITEM FOUND:" + item);
+        }
       }
-			console.log(krogerFoodUpcs);
-			
+      console.log(krogerFoodUpcs);
     } catch (error) {
-      // Handle error
-      console.error("Error:", error);
+      console.error("Error searching items:", error);
     }
   };
+
+  // const addProductsFromUpcs()
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setRecipeUrl(event.target.value);
@@ -106,6 +120,29 @@ export default function Page() {
             </Button>
           </CardBody>
         </Card>
+        {krogerFoodUpcs.length > 0 && (
+          <Card className="w-1/2 mt-16">
+            <CardBody className="flex items-center justify-center flex-col pt-4">
+              {krogerFoodUpcs.map((item, index) => (
+                <div key={index} className="flex justify-between w-full mb-2">
+                  <p>{item.item}</p>
+                  <Button
+                    color="danger"
+                    variant="bordered"
+                    size="sm"
+                    onClick={() => {
+                      setKrogerFoodUpcs((prevState) =>
+                        prevState.filter((_, i) => i !== index)
+                      );
+                    }}
+                  >
+                    x
+                  </Button>
+                </div>
+              ))}
+            </CardBody>
+          </Card>
+        )}
       </div>
     </div>
   );
