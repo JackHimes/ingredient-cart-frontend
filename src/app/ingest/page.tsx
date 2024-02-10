@@ -21,7 +21,9 @@ export default function Page() {
   const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
-
+  const [selectedItems, setSelectedItems] = useState<
+    { upc: string; quantity: number }[]
+  >([]);
   useEffect(() => {
     const storedTokenString = localStorage.getItem("customer_access_token");
     if (storedTokenString) {
@@ -30,7 +32,9 @@ export default function Page() {
     } else {
       setStoredToken("");
     }
-  }, []);
+
+    console.log(selectedItems);
+  }, [selectedItems]);
 
   const ingestRecipe = async (scriptName: string) => {
     // TODO: REPLACE WITH ACTUAL ENDPOINT
@@ -187,10 +191,76 @@ export default function Page() {
                     src={item.thumbnailUrl}
                     alt={item.item}
                     className="mb-2"
+                    onClick={() => {
+                      const existingItem = selectedItems.find(
+                        (i) => i.upc === item.upc
+                      );
+
+                      if (existingItem) {
+                        // If the item already exists, increment its quantity
+                        const newItems = selectedItems.map((i) =>
+                          i.upc === item.upc
+                            ? { ...i, quantity: i.quantity + 1 }
+                            : i
+                        );
+                        setSelectedItems(newItems);
+                      } else {
+                        // If the item doesn't exist, add it to the array
+                        setSelectedItems([
+                          ...selectedItems,
+                          { upc: item.upc, quantity: 1 },
+                        ]);
+                      }
+                    }}
                   />
                   <div className="text-center">
                     <p className="mb-2">{item.description}</p>
                     <p className="mb-2">{item.size}</p>
+                    {selectedItems.some((i) => i.upc === item.upc) && (
+                      <>
+                        <Button
+                          color="primary"
+                          variant="ghost"
+                          onClick={() => {
+                            const newItems = selectedItems.reduce<
+                              { upc: string; quantity: number }[]
+                            >((acc, i) => {
+                              if (i.upc === item.upc) {
+                                if (i.quantity > 1) {
+                                  acc.push({ ...i, quantity: i.quantity - 1 });
+                                }
+                              } else {
+                                acc.push(i);
+                              }
+                              return acc;
+                            }, []);
+                            setSelectedItems(newItems);
+                          }}
+                        >
+                          -
+                        </Button>
+
+                        <span>
+                          {selectedItems.find((i) => i.upc === item.upc)
+                            ?.quantity || 0}
+                        </span>
+
+                        <Button
+                          color="primary"
+                          variant="ghost"
+                          onClick={() => {
+                            const newItems = selectedItems.map((i) =>
+                              i.upc === item.upc
+                                ? { ...i, quantity: i.quantity + 1 }
+                                : i
+                            );
+                            setSelectedItems(newItems);
+                          }}
+                        >
+                          +
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -211,6 +281,13 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
+        <Button
+          onClick={() => {
+            setSelectedItems([]);
+          }}
+        >
+          Clear Selected Items
+        </Button>
       </div>
     </div>
   );
