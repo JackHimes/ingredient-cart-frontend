@@ -10,15 +10,15 @@ dotenv.config();
 
 export default function Page() {
   let scrappedFoods: string[] = [];
-	type Item = {
-		item: string;
-		upc: string;
-		description: string;
-		size?: string;
-		thumbnailUrl?: string;
-	};
-	
-	const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
+  type Item = {
+    item: string;
+    upc: string;
+    description: string;
+    size?: string;
+    thumbnailUrl?: string;
+  };
+
+  const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
 
@@ -55,7 +55,13 @@ export default function Page() {
   };
 
   const getItemsUpcs = async (items: string[]): Promise<any> => {
-    const upcsArray: { item: string; upc: string, description: string, thumbnailUrl?: string, size?: string }[][] = [];
+    const upcsArray: {
+      item: string;
+      upc: string;
+      description: string;
+      thumbnailUrl?: string;
+      size?: string;
+    }[][] = [];
 
     try {
       for (const item of items) {
@@ -81,22 +87,25 @@ export default function Page() {
         });
 
         if (response.data.data.length > 0) {
-					console.log(response.data.data);
-					
-					const upcs = response.data.data.slice(0, 5).map((data: any) => {
-						const thumbnailImage = data.images.find((image: any) => image.perspective === 'front');						
-						const thumbnailUrl = thumbnailImage ? thumbnailImage.sizes[3].url : undefined;
-						const size = data.items.length > 0 ? data.items[0].size : undefined;
+          console.log(response.data.data);
 
-				
-						return {
-							item: processedItem,
-							upc: data.upc,
-							description: data.description,
-							size: size,
-							thumbnailUrl: thumbnailUrl,
-						};
-					});
+          const upcs = response.data.data.slice(0, 5).map((data: any) => {
+            const thumbnailImage = data.images.find(
+              (image: any) => image.perspective === "front"
+            );
+            const thumbnailUrl = thumbnailImage
+              ? thumbnailImage.sizes[3].url
+              : undefined;
+            const size = data.items.length > 0 ? data.items[0].size : undefined;
+
+            return {
+              item: processedItem,
+              upc: data.upc,
+              description: data.description,
+              size: size,
+              thumbnailUrl: thumbnailUrl,
+            };
+          });
 
           upcsArray.push(upcs);
         } else {
@@ -147,8 +156,8 @@ export default function Page() {
   return (
     <div className="bg-green-200 text-amber-50">
       <Navbar />
-      <div className="h-screen flex justify-center">
-        <Card className="w-1/2 h-1/2 mt-16">
+      <div className="flex flex-col items-center overflow-auto">
+        <Card className="w-1/2 mt-16">
           <CardBody className="flex items-center justify-center">
             <Input
               value={recipeUrl}
@@ -165,39 +174,43 @@ export default function Page() {
             </Button>
           </CardBody>
         </Card>
-        {krogerFoodUpcs.length > 0 && (
-          <Card className="w-1/2 mt-16">
-            <CardBody className="flex items-center justify-center flex-col pt-4">
-              {krogerFoodUpcs.map((upcs, index) => (
+        {krogerFoodUpcs.map((upcs, arrayIndex) => (
+          <Card key={arrayIndex} className="flex flex-col mr-4 mb-4">
+            <h3 className="text-center font-bold mb-4">{upcs[0].item}</h3>
+            <CardBody className="flex items-center justify-start flex-row pt-4 overflow-auto">
+              {upcs.map((item, index) => (
                 <div
                   key={index}
-                  className="flex justify-between w-full mb-2 flex-col"
+                  className="flex flex-col items-center mb-4 mr-4"
                 >
-									<h3 className="text-center font-bold">{upcs[0].item}</h3>
-                  {upcs.map((item, i) => (
-                    <div key={i} className="flex justify-between w-full mb-2">
-                      <img src={item.thumbnailUrl} alt={item.item} />
-                      <p>{item.description}</p>
-                      <p>{item.size}</p>
-                      <Button
-                        color="danger"
-                        variant="bordered"
-                        size="sm"
-                        onClick={() => {
-                          setKrogerFoodUpcs((prevState) =>
-                            prevState.filter((_, i) => i !== index)
-                          );
-                        }}
-                      >
-                        x
-                      </Button>
-                    </div>
-                  ))}
+                  <img
+                    src={item.thumbnailUrl}
+                    alt={item.item}
+                    className="mb-2"
+                  />
+                  <div className="text-center">
+                    <p className="mb-2">{item.description}</p>
+                    <p className="mb-2">{item.size}</p>
+                  </div>
                 </div>
               ))}
+              <div className="flex justify-end items-center ml-4">
+                <Button
+                  color="danger"
+                  variant="bordered"
+                  size="sm"
+                  onClick={() => {
+                    setKrogerFoodUpcs((prevState) =>
+                      prevState.filter((_, i) => i !== arrayIndex)
+                    );
+                  }}
+                >
+                  x
+                </Button>
+              </div>
             </CardBody>
           </Card>
-        )}
+        ))}
       </div>
     </div>
   );
