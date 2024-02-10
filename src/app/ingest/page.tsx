@@ -10,9 +10,15 @@ dotenv.config();
 
 export default function Page() {
   let scrappedFoods: string[] = [];
-  const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<
-    { item: string; upc: string }[]
-  >([]);
+	type Item = {
+		item: string;
+		upc: string;
+		description: string;
+		size?: string;
+		thumbnailUrl?: string;
+	};
+	
+	const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
 
@@ -49,6 +55,8 @@ export default function Page() {
   };
 
   const getItemsUpcs = async (items: string[]): Promise<any> => {
+    const upcsArray: { item: string; upc: string, description: string, thumbnailUrl?: string, size?: string }[][] = [];
+
     try {
       for (const item of items) {
         // Kroger only lets 8 terms per search
@@ -58,9 +66,7 @@ export default function Page() {
           processedItem = item.split(" ").slice(0, 8).join(" ");
         }
 
-        const url = `https://api.kroger.com/v1/products?filter.term=${encodeURIComponent(
-          processedItem
-        )}`;
+        const url = `https://api.kroger.com/v1/products?filter.term=${processedItem}`;
 
         if (!storedToken) {
           console.error("Undefine Token");
@@ -74,20 +80,32 @@ export default function Page() {
           },
         });
 
-        if (response.data.data[0]) {
-          setKrogerFoodUpcs((prevState) => [
-            ...prevState,
-            {
-              item: processedItem,
-              upc: response.data.data[0].upc,
-            },
-          ]);
+        if (response.data.data.length > 0) {
+					console.log(response.data.data);
+					
+					const upcs = response.data.data.slice(0, 5).map((data: any) => {
+						const thumbnailImage = data.images.find((image: any) => image.perspective === 'front');						
+						const thumbnailUrl = thumbnailImage ? thumbnailImage.sizes[3].url : undefined;
+						const size = data.items.length > 0 ? data.items[0].size : undefined;
+
+				
+						return {
+							item: processedItem,
+							upc: data.upc,
+							description: data.description,
+							size: size,
+							thumbnailUrl: thumbnailUrl,
+						};
+					});
+
+          upcsArray.push(upcs);
         } else {
           // TODO: HANDLE CASE WHEN NO ITEMS ARE FOUND IN SEARCH
           console.log("NO ITEM FOUND:" + item);
         }
       }
-      console.log(krogerFoodUpcs);
+      console.log(upcsArray);
+      setKrogerFoodUpcs(upcsArray);
     } catch (error) {
       console.error("Error searching items:", error);
     }
@@ -150,26 +168,33 @@ export default function Page() {
         {krogerFoodUpcs.length > 0 && (
           <Card className="w-1/2 mt-16">
             <CardBody className="flex items-center justify-center flex-col pt-4">
-              {krogerFoodUpcs.map((item, index) => (
-                <div key={index} className="flex justify-between w-full mb-2">
-                  <p>{item.item}</p>
-                  <Button
-                    color="danger"
-                    variant="bordered"
-                    size="sm"
-                    onClick={() => {
-                      setKrogerFoodUpcs((prevState) =>
-                        prevState.filter((_, i) => i !== index)
-                      );
-                    }}
-                  >
-                    x
-                  </Button>
+              {krogerFoodUpcs.map((upcs, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between w-full mb-2 flex-col"
+                >
+									<h3 className="text-center font-bold">{upcs[0].item}</h3>
+                  {upcs.map((item, i) => (
+                    <div key={i} className="flex justify-between w-full mb-2">
+                      <img src={item.thumbnailUrl} alt={item.item} />
+                      <p>{item.description}</p>
+                      <p>{item.size}</p>
+                      <Button
+                        color="danger"
+                        variant="bordered"
+                        size="sm"
+                        onClick={() => {
+                          setKrogerFoodUpcs((prevState) =>
+                            prevState.filter((_, i) => i !== index)
+                          );
+                        }}
+                      >
+                        x
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               ))}
-              <Button onClick={() => addToCart(krogerFoodUpcs)}>
-                Add to Cart
-              </Button>
             </CardBody>
           </Card>
         )}
