@@ -170,7 +170,6 @@ export default function Page() {
               label="Recipe URL"
               variant="bordered"
               defaultValue="https://your-recipe-url-here.com"
-              errorMessage="Please enter a valid recipe"
               className="max-w-xs"
             />
             <Button onClick={() => ingestRecipe("scrape_recipe")}>
@@ -281,9 +280,18 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
-          {selectedItems.length > 0 && (
-            <Button onClick={() => addToCart(selectedItems)}>Add to Cart</Button>
-          )}
+        {selectedItems.length > 0 && (
+          <Button
+            onClick={() => {
+              addToCart(selectedItems);
+              setSelectedItems([]);
+              setKrogerFoodUpcs([]);
+              setRecipeUrl('');
+            }}
+          >
+            Add to Cart
+          </Button>
+        )}
         <Button
           onClick={() => {
             setSelectedItems([]);
