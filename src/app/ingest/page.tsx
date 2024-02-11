@@ -124,10 +124,10 @@ export default function Page() {
     }
   };
 
-  const addToCart = async (items: { upc: string }[]) => {
+  const addToCart = async (items: { upc: string; quantity: number }[]) => {
     const payloadItems = items.map((item) => ({
       upc: item.upc,
-      quantity: 1,
+      quantity: item.quantity,
       modality: "PICKUP",
     }));
 
@@ -281,6 +281,9 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
+          {selectedItems.length > 0 && (
+            <Button onClick={() => addToCart(selectedItems)}>Add to Cart</Button>
+          )}
         <Button
           onClick={() => {
             setSelectedItems([]);
