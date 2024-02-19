@@ -13,7 +13,7 @@ export default function Page() {
   type Item = {
     item: string;
     upc: string;
-    description: string;
+    description?: string;
     size?: string;
     thumbnailUrl?: string;
   };
@@ -269,8 +269,17 @@ export default function Page() {
                   variant="bordered"
                   size="sm"
                   onClick={() => {
+                    const removedItems = krogerFoodUpcs[arrayIndex];
                     setKrogerFoodUpcs((prevState) =>
                       prevState.filter((_, i) => i !== arrayIndex)
+                    );
+                    setSelectedItems((prevState) =>
+                      prevState.filter(
+                        (item) =>
+                          !removedItems.some(
+                            (removedItem) => removedItem.upc === item.upc
+                          )
+                      )
                     );
                   }}
                 >
@@ -286,7 +295,7 @@ export default function Page() {
               addToCart(selectedItems);
               setSelectedItems([]);
               setKrogerFoodUpcs([]);
-              setRecipeUrl('');
+              setRecipeUrl("");
             }}
           >
             Add to Cart

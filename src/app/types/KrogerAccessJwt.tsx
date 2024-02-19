@@ -1,4 +1,4 @@
-interface KrogerAccessJwt {
+export interface KrogerAccessJwt {
     aud: string;        // Audience
     exp: number;        // Expiration Time (Unix timestamp)
     iat: number;        // Issued At (Unix timestamp)

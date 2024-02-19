@@ -16,6 +16,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken"
 import * as dotenv from "dotenv";
 import { fetchAccessToken, refreshAccessToken } from '../api/krogerAuth.tsx'
+import { KrogerAccessJwt } from "../types/KrogerAccessJwt.tsx";
 
 dotenv.config();
 
