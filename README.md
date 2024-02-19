@@ -1,6 +1,6 @@
 # Ingredient Cart
 
-Welcome to Ingredient Cart, a Next.js project utilizing NextUI for a seamless front-end experience. This application automates the process of adding recipe ingredients to your Kroger shopping cart, saving you valuable time and effort.
+Welcome to Ingredient Cart, a Next.js project utilizing NextUI for a seamless front-end experience. This application automates the process of adding recipe ingredients to your Kroger shopping cart, saving you valuable time and effort. [Live Deployment Here](https://ingredient-cart.vercel.app/sign-in?redirect_url=https%3A%2F%2Fingredient-cart.vercel.app%2F)
 
 ## How it Works
 
