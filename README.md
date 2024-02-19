@@ -16,7 +16,7 @@ To set up Ingredient Cart locally, follow these steps:
 
 1. **Clone the Repository**: Start by cloning this repository to your local machine using the following command:
    ```
-   git clone <repository-url>
+   git clone git@github.com:JackHimes/ingredient-cart-frontend.git
    ```
 2. **Install Dependencies**: Navigate into the cloned repository directory and run the following command to install the necessary dependencies:
    ```
