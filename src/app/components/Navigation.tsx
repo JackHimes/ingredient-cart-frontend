@@ -6,7 +6,7 @@ import { UserButton } from "@clerk/nextjs";
 
 export default function Navigation() {
     return (
-        <Navbar isBordered height='75px' className="bg-emerald-800 p-4">
+        <Navbar height='75px' className="bg-light-green p-4">
             <NavbarBrand>
                 <Logo />
             </NavbarBrand>

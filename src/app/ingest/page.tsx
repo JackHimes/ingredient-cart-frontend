@@ -158,7 +158,7 @@ export default function Page() {
   };
 
   return (
-    <div className="bg-green-200 text-amber-50">
+    <div className="bg-light-green text-amber-50">
       <Navbar />
       <div className="flex flex-col items-center overflow-auto">
         <Card className="w-1/2 mt-16">

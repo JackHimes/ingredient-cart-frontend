@@ -50,7 +50,7 @@ export default function Page() {
   };
 
   return (
-    <div className="bg-green-200 text-amber-50">
+    <div className="bg-light-green text-amber-50">
       <Navbar />
       <div className="h-screen">
         <div>
