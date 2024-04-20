@@ -92,7 +92,7 @@ export default function Page() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-light-green">
+    <div className="flex flex-col h-screen bg-emerald-50">
       <Navbar />
       <div className="flex-1 flex">
         <div className="w-1/4 p-4">

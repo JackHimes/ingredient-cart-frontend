@@ -1,16 +1,23 @@
-"use client"
+"use client";
 
-import {  Navbar,   NavbarBrand,   NavbarContent,   NavbarItem,   NavbarMenuToggle,  NavbarMenu,  NavbarMenuItem, Link, Button} from "@nextui-org/react";
-import Logo from "./IngredientCartLogo.tsx"
+import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
+  Link,
+  Button,
+} from "@nextui-org/react";
+import Logo from "./IngredientCartLogo.tsx";
 import { UserButton } from "@clerk/nextjs";
 
 export default function Navigation() {
-    return (
-        <Navbar height='75px' className="bg-light-green p-4">
-            <NavbarBrand>
-                <Logo />
-            </NavbarBrand>
-            <NavbarContent className="hidden sm:flex gap-4" justify="center">
+  return (
+    <Navbar height="75px" maxWidth="full" className="bg-light-green p-4">
+      <NavbarContent className=" basis-1/3 flex justify-start">
         <NavbarItem>
           <Link color="foreground" href="../">
             Home
@@ -27,11 +34,15 @@ export default function Navigation() {
           </Link>
         </NavbarItem>
       </NavbarContent>
+
+      <NavbarBrand className="basis-1/3 flex justify-center">
+        <Logo />
+      </NavbarBrand>
       <NavbarContent justify="end">
         <NavbarItem className="hidden lg:flex">
-          <UserButton afterSignOutUrl="/"/>
+          <UserButton afterSignOutUrl="/" />
         </NavbarItem>
       </NavbarContent>
-        </Navbar>
-    );
+    </Navbar>
+  );
 }
