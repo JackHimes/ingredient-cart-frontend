@@ -22,6 +22,9 @@ const config: Config = {
         'green-text': '#003b31',
         'off-white': '#fffbfa'
       },
+      fontFamily: {
+        sans: ['var(--font-outfit)'],
+      },
     },
   },
   darkMode: "class",

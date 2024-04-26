@@ -11,7 +11,7 @@ import {
   Image,
 } from "@nextui-org/react";
 import { useEffect, useState } from "react";
-import Navbar from "../components/Navigation";
+import Navbar from "../components/common/Navigation.tsx";
 import axios from "axios";
 import jwt from "jsonwebtoken"
 import * as dotenv from "dotenv";

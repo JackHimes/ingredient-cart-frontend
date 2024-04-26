@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@nextui-org/button";
-import Navbar from "../components/Navigation";
+import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import { useEffect } from "react";

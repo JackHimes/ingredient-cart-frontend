@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import logo from '../assets/IngredientCartLogo.svg'
+import logo from '../../assets/IngredientCartLogo.svg'
 
 export default function IngredientCartLogo() {
   return(

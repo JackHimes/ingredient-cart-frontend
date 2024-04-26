@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, CardBody, Input } from "@nextui-org/react";
-import Navbar from "../components/Navigation";
+import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import { ChangeEvent, useEffect, useState } from "react";

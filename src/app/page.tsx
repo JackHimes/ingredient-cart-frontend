@@ -2,8 +2,9 @@
 
 import {Button, ButtonGroup, Card, CardFooter, Image} from "@nextui-org/react";
 import { useUser } from "@clerk/nextjs";
-import Navbar from './components/Navigation';
+import Navbar from './components/common/Navigation';
 import { useRouter } from "next/navigation";
+import HeroSection from "./components/sections/HeroSection";
 
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
   return (
     <div className="bg-light-green text-amber-50">
       <Navbar />
+      <HeroSection />
       <div className="h-screen">
         <div>
           <Card isFooterBlurred radius="lg" className="m-8 p-3 border-none max-w-60 h-80">
