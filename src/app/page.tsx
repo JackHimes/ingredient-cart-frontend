@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import Navbar from './components/common/Navigation';
 import { useRouter } from "next/navigation";
 import HeroSection from "./components/sections/HeroSection";
+import About from "./components/sections/About";
 
 
 export default function Home() {
@@ -26,6 +27,8 @@ export default function Home() {
     <div className="bg-light-green text-amber-50">
       <Navbar />
       <HeroSection />
+      <div className="relative bg-off-white flex flex-col items-center justify-center pt-[656px] -mt-[506px]" />
+      <About />
       <div className="h-screen">
         <div>
           <Card isFooterBlurred radius="lg" className="m-8 p-3 border-none max-w-60 h-80">
