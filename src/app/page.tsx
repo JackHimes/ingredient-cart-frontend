@@ -6,6 +6,7 @@ import Navbar from './components/common/Navigation';
 import { useRouter } from "next/navigation";
 import HeroSection from "./components/sections/HeroSection";
 import About from "./components/sections/About";
+import Recipes from "./components/sections/Recipes";
 
 
 export default function Home() {
@@ -29,6 +30,7 @@ export default function Home() {
       <HeroSection />
       <div className="relative bg-off-white flex flex-col items-center justify-center pt-[656px] -mt-[506px]" />
       <About />
+      <Recipes />
       <div className="h-screen">
         <div>
           <Card isFooterBlurred radius="lg" className="m-8 p-3 border-none max-w-60 h-80">
