@@ -1,11 +1,13 @@
 "use client";
 import { Button } from "@nextui-org/react";
+import {Divider} from "@nextui-org/react";
 import Image from "next/image";
 
 export default function Recipes() {
   return (
-    <div className="p-10">
+    <div className="p-10 bg-off-white">
       <div className="flex flex-col items-center">
+            <Divider className="bg-dark-green max-w-2xl"/>
         <div className="py-16">
           <h1 className="text-2xl text-green-text font-bold text-center">
             Recommended Recipes
