@@ -35,81 +35,65 @@ export default function About() {
         </div>
       </div>
       <div className="mx-36 pt-44 flex justify-between">
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-48">
           <Image
             src="/recipe.png"
             alt="Vegatable Icon"
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center">
-            Easily Save and Organize Favorite Recipes
-          </h2>
+          <h2 className="text-green-text text-center py-10">Save Favorite Recipes</h2>
           <p className="text-green-text text-center">
-            Keep your culinary inspirations organized and accessible with
-            Ingredient Cart's recipe saving feature. By importing recipes
-            directly through their URLs, you can create a personalized cookbook
-            within the app. Favorite, categorize, and retrieve your best recipes
-            anytime, making meal planning a breeze and ensuring you're never
-            short of cooking ideas.
+            Create your digital cookbook by saving recipes from any site. Access
+            and organize your favorites for easy meal planning.
           </p>
         </div>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-48">
           <Image
             src="/vegetables.png"
             alt="Vegatable Icon"
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center">
-            Selecting the Best Ingredients for Your Needs
+          <h2 className="text-green-text text-center py-10">
+            Pick the Best Ingredients
           </h2>
           <p className="text-green-text text-center">
-            Navigate a curated selection of ingredients that align perfectly
-            with your dietary preferences and cooking style. Our app simplifies
-            your shopping by extracting ingredient lists from any recipe URL you
-            provide, allowing you to customize your selections. Whether you're
-            looking for organic produce, budget-friendly options, or specialty
-            items, Ingredient Cart ensures you get exactly what you need for
-            your meals.
+            Customize your grocery list by selecting ingredients directly from
+            your favorite recipes. Shop smart with options that match your
+            dietary needs and budget.
           </p>
         </div>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-48">
           <Image
             src="/box-car.png"
             alt="Vegatable Icon"
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center">
-            Streamlined Grocery Pickup and Delivery Options
+          <h2 className="text-green-text text-center py-10">
+            Easy Grocery Pickup or Delivery
           </h2>
           <p className="text-green-text text-center">
-            Turn your recipe ingredients into a ready-to-pick-up grocery order
-            at local stores like Kroger, Walmart, and Whole Foods, or opt for
-            the convenience of home delivery. Ingredient Cart bridges the gap
-            between recipe planning and meal preparation by facilitating a
-            seamless transition from digital cart to physical groceries,
-            tailored to fit your schedule.
+            Convert your selected ingredients into an order at local stores like
+            Kroger, Walmart, and Whole Foods, choosing pickup or delivery to
+            suit your schedule.
           </p>
         </div>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-48">
           <Image
             src="/cooking.png"
             alt="Vegatable Icon"
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center">
-            Cooking Healthy, Delicious Meals Made Easy
+          <h2 className="text-green-text text-center py-10">
+            Cook Healthy Meals Easily
           </h2>
           <p className="text-green-text text-center">
-            Empower your home cooking with ingredients that promote health and
-            taste. Whether you're cooking for yourself or your family,
-            Ingredient Cart makes it simple to follow through on your meal
-            plans. From sourcing the freshest ingredients to delivering them at
-            your doorstep, our app supports you every step of the way, ensuring
-            that your kitchen is always ready for a healthy feast.
+            Bring healthy, delicious meals to the table with ease. Our app helps
+            you from planning to plate, ensuring fresh ingredients and happy
+            dining.
           </p>
         </div>
       </div>
