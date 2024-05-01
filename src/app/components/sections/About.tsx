@@ -19,10 +19,10 @@ export default function About() {
         </div>
         <div className="flex flex-col">
           <p className="w-96 text-dark-green font-sans">
-            Ingredient Cart is your gateway to a virtual culinary experience.
+{`            Ingredient Cart is your gateway to a virtual culinary experience.
             With just a click, you can explore an array of recipes and
             ingredients without leaving your home. It's an easy and convenient
-            way to discover new flavors and create delightful meals.
+            way to discover new flavors and create delightful meals.`}
           </p>
           <Image
             className="mt-56"

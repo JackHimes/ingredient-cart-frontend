@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import HeroSection from "./components/sections/HeroSection";
 import About from "./components/sections/About";
 import Recipes from "./components/sections/Recipes";
+import Footer from "./components/common/Footer";
 
 
 export default function Home() {
@@ -31,7 +32,7 @@ export default function Home() {
       <div className="relative bg-off-white flex flex-col items-center justify-center pt-[656px] -mt-[506px]" />
       <About />
       <Recipes />
-      <div className="h-screen">
+      {/* <div className="h-screen">
         <div>
           <Card isFooterBlurred radius="lg" className="m-8 p-3 border-none max-w-60 h-80">
             <p>Not linked up yet? Link your Kroger account here:</p>
@@ -46,7 +47,8 @@ export default function Home() {
             </CardFooter>
           </Card>
         </div>
-      </div>
+      </div> */}
+      <Footer />
     </div>
   )
 }
