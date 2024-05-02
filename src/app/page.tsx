@@ -32,22 +32,6 @@ export default function Home() {
       <div className="relative bg-off-white flex flex-col items-center justify-center pt-[656px] -mt-[506px]" />
       <About />
       <Recipes />
-      {/* <div className="h-screen">
-        <div>
-          <Card isFooterBlurred radius="lg" className="m-8 p-3 border-none max-w-60 h-80">
-            <p>Not linked up yet? Link your Kroger account here:</p>
-            <CardFooter>
-              <Image
-                className="object-cover"
-                height={200}
-                src="https://developer.kroger.com/assets/logos/integrated-blue-text.svg"
-                width={200}
-                onClick={openKrogerAuth}
-              />
-            </CardFooter>
-          </Card>
-        </div>
-      </div> */}
       <Footer />
     </div>
   )
