@@ -16,20 +16,20 @@ import { UserButton } from "@clerk/nextjs";
 
 export default function Navigation() {
   return (
-    <Navbar height="75px" maxWidth="full" className="bg-light-green p-4">
+    <Navbar height="75px" maxWidth="full" className="bg-light-green p-4 pb-8 border-t-4 border-peach">
       <NavbarContent className=" basis-1/3 flex justify-start">
         <NavbarItem>
-          <Link color="foreground" href="../">
+          <Link className="font-thin" color="foreground" href="../">
             Home
           </Link>
         </NavbarItem>
-        <NavbarItem isActive>
-          <Link color="foreground" href="../ingest" aria-current="page">
+        <NavbarItem>
+          <Link className="font-thin" color="foreground" href="../ingest">
             Automated Cart
           </Link>
         </NavbarItem>
         <NavbarItem>
-          <Link color="foreground" href="../configuration">
+          <Link className="font-thin" color="foreground" href="../configuration">
             Settings
           </Link>
         </NavbarItem>

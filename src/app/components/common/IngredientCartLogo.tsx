@@ -1,13 +1,14 @@
 import Image from 'next/image';
-import logo from '../../assets/IngredientCartLogo.svg'
 
 export default function IngredientCartLogo() {
   return(
   <div className='mt-4 mb-2'>
     <Image
       priority
-      src={logo}
+      src={'/ingredient-cart-logo.png'}
       alt="Follow us on Twitter"
+      width={150}
+      height={150}
     />
   </div>
   )

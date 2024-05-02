@@ -18,8 +18,8 @@ export default function About() {
           />
         </div>
         <div className="flex flex-col">
-          <p className="w-96 text-dark-green font-sans">
-{`            Ingredient Cart is your gateway to a virtual culinary experience.
+          <p className="w-96 text-dark-green font-thin">
+            {`            Ingredient Cart is your gateway to a virtual culinary experience.
             With just a click, you can explore an array of recipes and
             ingredients without leaving your home. It's an easy and convenient
             way to discover new flavors and create delightful meals.`}
@@ -42,8 +42,10 @@ export default function About() {
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center py-10">Save Favorite Recipes</h2>
-          <p className="text-green-text text-center">
+          <h2 className="text-green-text text-center py-10 font-semibold">
+            Save Favorite Recipes
+          </h2>
+          <p className="text-green-text text-center font-thin">
             Create your digital cookbook by saving recipes from any site. Access
             and organize your favorites for easy meal planning.
           </p>
@@ -55,10 +57,10 @@ export default function About() {
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center py-10">
+          <h2 className="text-green-text text-center py-10 font-semibold">
             Pick the Best Ingredients
           </h2>
-          <p className="text-green-text text-center">
+          <p className="text-green-text text-center font-thin">
             Customize your grocery list by selecting ingredients directly from
             your favorite recipes. Shop smart with options that match your
             dietary needs and budget.
@@ -71,10 +73,10 @@ export default function About() {
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center py-10">
+          <h2 className="text-green-text text-center py-10 font-semibold">
             Easy Grocery Pickup or Delivery
           </h2>
-          <p className="text-green-text text-center">
+          <p className="text-green-text text-center font-thin">
             Convert your selected ingredients into an order at local stores like
             Kroger, Walmart, and Whole Foods, choosing pickup or delivery to
             suit your schedule.
@@ -87,10 +89,10 @@ export default function About() {
             width={130}
             height={122}
           />
-          <h2 className="text-green-text text-center py-10">
+          <h2 className="text-green-text text-center py-10 font-semibold">
             Cook Healthy Meals Easily
           </h2>
-          <p className="text-green-text text-center">
+          <p className="text-green-text text-center font-thin">
             Bring healthy, delicious meals to the table with ease. Our app helps
             you from planning to plate, ensuring fresh ingredients and happy
             dining.
