@@ -161,7 +161,7 @@ export default function Page() {
   return (
     <div className="bg-off-white min-h-screen flex flex-col text-green-text">
       <Navbar />
-      <div className="flex flex-col items-center overflow-auto">
+      <div className="flex flex-col items-center min-h-[600px] overflow-auto">
         <div className="bg-off-white border border-border-color w-1/2 my-12 flex flex-col items-center justify-center">
           <Input
             value={recipeUrl}

@@ -17,6 +17,7 @@ import jwt from "jsonwebtoken"
 import * as dotenv from "dotenv";
 import { fetchAccessToken, refreshAccessToken } from '../api/krogerAuth.tsx'
 import { KrogerAccessJwt } from "../types/KrogerAccessJwt.tsx";
+import Footer from "../components/common/Footer.tsx";
 
 dotenv.config();
 
@@ -92,30 +93,35 @@ export default function Page() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-emerald-50">
+    <div className="flex flex-col h-screen bg-off-white">
       <Navbar />
-      <div className="flex-1 flex">
+      <div className="flex-1 min-h-[600px] flex">
         <div className="w-1/4 p-4">
-          <Table>
+          <Table 
+          shadow="none"
+          classNames={{
+            base: "bg-transparent border border-border-green",
+            table: "bg-transparent",
+            th: "bg-transparent font-medium text-green-text text-lg",
+            td: "font-thin text-green-text",
+            wrapper: "bg-transparent",
+          }}>
             <TableHeader>
               <TableColumn>CONFIGURATIONS</TableColumn>
             </TableHeader>
             <TableBody>
               <TableRow
                 onClick={() => handleItemClick("Grocery Stores")}
-                className="text-slate-800"
               >
                 <TableCell>Grocery Stores</TableCell>
               </TableRow>
               <TableRow
                 onClick={() => handleItemClick("Locations")}
-                className="text-slate-800"
               >
                 <TableCell>Locations</TableCell>
               </TableRow>
               <TableRow
                 onClick={() => handleItemClick("Account")}
-                className="text-slate-800"
               >
                 <TableCell>Account</TableCell>
               </TableRow>
@@ -124,11 +130,10 @@ export default function Page() {
         </div>
         <div className="w-3/4 p-4">
           {selectedItem === "Grocery Stores" && (
-            <div className="bg-slate-50 rounded-lg text-slate-800 p-4">
-              <div>Added Stores:</div>
+            <div className="border border-border-green text-green-text font-medium text-lg p-4">
               <div>
                 <p>Add a store:</p>
-                <Button onClick={openKrogerAuth}>
+                <Button className="my-6" onClick={openKrogerAuth}>
                   <Image
                     className="object-cover"
                     height={200}
@@ -144,6 +149,7 @@ export default function Page() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
