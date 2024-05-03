@@ -26,7 +26,7 @@ export default function Home() {
   
 
   return (
-    <div className="bg-light-green text-amber-50">
+    <div className="bg-light-green text-green-text">
       <Navbar />
       <HeroSection />
       <div className="relative bg-off-white flex flex-col items-center justify-center pt-[656px] -mt-[506px]" />

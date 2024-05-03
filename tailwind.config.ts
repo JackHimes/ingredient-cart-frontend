@@ -20,7 +20,8 @@ const config: Config = {
         'dark-green': '#005447',
         'peach': '#e69e81',
         'green-text': '#003b31',
-        'off-white': '#fffbfa'
+        'off-white': '#fffbfa',
+        'border-color': '#ccd5d2'
       },
       fontFamily: {
         sans: ['var(--font-outfit)'],

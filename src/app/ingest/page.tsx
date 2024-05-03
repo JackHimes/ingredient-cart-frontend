@@ -5,6 +5,7 @@ import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import { ChangeEvent, useEffect, useState } from "react";
+import Footer from "../components/common/Footer";
 
 dotenv.config();
 
@@ -158,33 +159,48 @@ export default function Page() {
   };
 
   return (
-    <div className="bg-light-green text-amber-50">
+    <div className="bg-off-white min-h-screen flex flex-col text-green-text">
       <Navbar />
       <div className="flex flex-col items-center overflow-auto">
-        <Card className="w-1/2 mt-16">
-          <CardBody className="flex items-center justify-center">
-            <Input
-              value={recipeUrl}
-              onChange={handleInputChange}
-              isInvalid={false}
-              label="Recipe URL"
-              variant="bordered"
-              defaultValue="https://your-recipe-url-here.com"
-              className="max-w-xs"
-            />
-            <Button onClick={() => ingestRecipe("scrape_recipe")}>
-              Extract Ingredients!
-            </Button>
-          </CardBody>
-        </Card>
+        <div className="bg-off-white border border-border-color w-1/2 my-12 flex flex-col items-center justify-center">
+          <Input
+            value={recipeUrl}
+            onChange={handleInputChange}
+            isInvalid={false}
+            label="Recipe URL"
+            variant="underlined"
+            defaultValue="https://your-recipe-url-here.com"
+            classNames={{
+              label: "text-center font-thin w-full",
+              innerWrapper: "w-1/2 text-center items-center w-full",
+              inputWrapper: "text-center items-center w-full",
+              input: "text-center items-center w-full",
+              base: "w-1/2",
+            }}
+          />
+          <Button
+            className="my-8 bg-peach border border-dark-green font-thin"
+            radius="none"
+            onClick={() => ingestRecipe("scrape_recipe")}
+          >
+            Extract Ingredients!
+          </Button>
+        </div>
         {krogerFoodUpcs.map((upcs, arrayIndex) => (
-          <Card key={arrayIndex} className="flex flex-col mr-4 mb-4">
-            <h3 className="text-center font-bold mb-4">{upcs[0].item}</h3>
-            <CardBody className="flex items-center justify-start flex-row pt-4 overflow-auto">
+          <Card
+            key={arrayIndex}
+            radius="none"
+            shadow="none"
+            className="flex flex-col mx-10 mb-4 px-2 bg-off-white border border-border-green"
+          >
+            <h3 className="text-center text-green-text font-medium mb-4">
+              {upcs[0].item}
+            </h3>
+            <CardBody className="flex flex-row overflow-auto items-center justify-start flex-row pt-4">
               {upcs.map((item, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center mb-4 mr-4"
+                  className="flex flex-col items-center max-w-72 mb-4 mr-4 flex-shrink-0"
                 >
                   <img
                     src={item.thumbnailUrl}
@@ -212,14 +228,15 @@ export default function Page() {
                       }
                     }}
                   />
-                  <div className="text-center">
+                  <div className="text-center mx-6">
                     <p className="mb-2">{item.description}</p>
                     <p className="mb-2">{item.size}</p>
                     {selectedItems.some((i) => i.upc === item.upc) && (
                       <>
                         <Button
-                          color="primary"
-                          variant="ghost"
+                          className="mx-2 bg-peach border border-dark-green font-thin"
+                          radius="none"
+                          size="sm"
                           onClick={() => {
                             const newItems = selectedItems.reduce<
                               { upc: string; quantity: number }[]
@@ -245,8 +262,9 @@ export default function Page() {
                         </span>
 
                         <Button
-                          color="primary"
-                          variant="ghost"
+                          className="mx-2 bg-peach border border-dark-green font-thin"
+                          radius="none"
+                          size="sm"
                           onClick={() => {
                             const newItems = selectedItems.map((i) =>
                               i.upc === item.upc
@@ -265,8 +283,8 @@ export default function Page() {
               ))}
               <div className="flex justify-end items-center ml-4">
                 <Button
-                  color="danger"
-                  variant="bordered"
+                  className="mx-2 bg-peach border border-dark-green font-thin"
+                  radius="none"
                   size="sm"
                   onClick={() => {
                     const removedItems = krogerFoodUpcs[arrayIndex];
@@ -291,6 +309,8 @@ export default function Page() {
         ))}
         {selectedItems.length > 0 && (
           <Button
+            className="my-8 bg-peach border border-dark-green font-thin"
+            radius="none"
             onClick={() => {
               addToCart(selectedItems);
               setSelectedItems([]);
@@ -301,14 +321,19 @@ export default function Page() {
             Add to Cart
           </Button>
         )}
-        <Button
-          onClick={() => {
-            setSelectedItems([]);
-          }}
-        >
-          Clear Selected Items
-        </Button>
+        {selectedItems.length > 0 && (
+          <Button
+            className="my-8 bg-peach border border-dark-green font-thin"
+            radius="none"
+            onClick={() => {
+              setSelectedItems([]);
+            }}
+          >
+            Clear Selected Items
+          </Button>
+        )}
       </div>
+      <Footer />
     </div>
   );
 }
