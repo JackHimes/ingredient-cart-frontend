@@ -6,6 +6,7 @@ import axios from "axios";
 import * as dotenv from "dotenv";
 import { ChangeEvent, useEffect, useState } from "react";
 import Footer from "../components/common/Footer";
+import {Spinner} from "@nextui-org/react";
 
 dotenv.config();
 
@@ -22,9 +23,11 @@ export default function Page() {
   const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<
     { upc: string; quantity: number }[]
   >([]);
+
   useEffect(() => {
     const storedTokenString = localStorage.getItem("customer_access_token");
     if (storedTokenString) {
@@ -38,6 +41,8 @@ export default function Page() {
   }, [selectedItems]);
 
   const ingestRecipe = async (scriptName: string) => {
+    setKrogerFoodUpcs([]);
+    setSelectedItems([]);
     // TODO: REPLACE WITH ACTUAL ENDPOINT
     const endpoint = "http://localhost:3333/tasks/scrape_recipe";
 
@@ -56,7 +61,7 @@ export default function Page() {
       })
       .catch((error) => {
         console.error("Error Ingesting Recipe:", error);
-      });
+      })
   };
 
   const getItemsUpcs = async (items: string[]): Promise<any> => {
@@ -69,6 +74,7 @@ export default function Page() {
     }[][] = [];
 
     try {
+      setIsLoading(true); // Start Spinner
       for (const item of items) {
         // Kroger only lets 8 terms per search
         let processedItem = item;
@@ -120,6 +126,7 @@ export default function Page() {
       }
       console.log(upcsArray);
       setKrogerFoodUpcs(upcsArray);
+      setIsLoading(false); // Stop Spinner
     } catch (error) {
       console.error("Error searching items:", error);
     }
@@ -186,6 +193,11 @@ export default function Page() {
             Extract Ingredients!
           </Button>
         </div>
+        {isLoading && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
+          <Spinner size="lg" label="Gathering Ingredients!" color="success" classNames={{ label: "text-green-text" }}/>
+        </div>
+      )}
         {krogerFoodUpcs.map((upcs, arrayIndex) => (
           <Card
             key={arrayIndex}
@@ -307,10 +319,10 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
-        {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
             radius="none"
+            isDisabled={selectedItems.length === 0}
             onClick={() => {
               addToCart(selectedItems);
               setSelectedItems([]);
@@ -320,7 +332,6 @@ export default function Page() {
           >
             Add to Cart
           </Button>
-        )}
         {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
