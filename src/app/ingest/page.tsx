@@ -1,12 +1,20 @@
 "use client";
 
-import { Button, Card, CardBody, Input } from "@nextui-org/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  Select,
+  SelectItem,
+  Input,
+} from "@nextui-org/react";
 import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import { ChangeEvent, useEffect, useState } from "react";
 import Footer from "../components/common/Footer";
-import {Spinner} from "@nextui-org/react";
+import { Spinner } from "@nextui-org/react";
+import { getTokenHandler } from "../factories/TokenHandlerFactory";
 
 dotenv.config();
 
@@ -20,6 +28,25 @@ export default function Page() {
     thumbnailUrl?: string;
   };
 
+  type GrocerSelectItem = {
+    label: string;
+    value: string;
+    description: string;
+  };
+
+  let grocers: GrocerSelectItem[] = [
+    {
+      label: "Kroger",
+      value: "kroger",
+      description: "The second most popular pet in the world",
+    },
+    {
+      label: "Walmart",
+      value: "walmart",
+      description: "The second most popular pet in the world",
+    },
+  ];
+
   const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
@@ -27,6 +54,10 @@ export default function Page() {
   const [selectedItems, setSelectedItems] = useState<
     { upc: string; quantity: number }[]
   >([]);
+  const [authCode, setAuthCode] = useState("");
+  const [redirectUri, setRedirectUri] = useState("");
+  const [grocer, setGrocer] = useState("kroger");
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
     const storedTokenString = localStorage.getItem("customer_access_token");
@@ -39,6 +70,16 @@ export default function Page() {
 
     console.log(selectedItems);
   }, [selectedItems]);
+
+  const handleFetchAccessToken = async () => {
+    try {
+      const tokenHandler = getTokenHandler(grocer);
+      const config = await tokenHandler.fetchAccessToken(authCode, redirectUri);
+      setConfig(config);
+    } catch (error) {
+      console.error("Error fetching access token:", error);
+    }
+  };
 
   const ingestRecipe = async (scriptName: string) => {
     setKrogerFoodUpcs([]);
@@ -61,7 +102,7 @@ export default function Page() {
       })
       .catch((error) => {
         console.error("Error Ingesting Recipe:", error);
-      })
+      });
   };
 
   const getItemsUpcs = async (items: string[]): Promise<any> => {
@@ -192,12 +233,43 @@ export default function Page() {
           >
             Extract Ingredients!
           </Button>
+          <div className="flex">
+            <Select
+              placeholder="Select a grocer"
+              radius="none"
+              className="my-2"
+              onChange={(value) => setGrocer(value.target.value)}
+              value={grocer}
+            >
+              {grocers.map((grocer) => (
+                <SelectItem
+                  key={grocer.value}
+                  value={grocer.value}
+                  className="flex items-center text-black bg-white"
+                >
+                  {grocer.label}
+                </SelectItem>
+              ))}
+            </Select>
+            <Button
+              className="m-4 bg-peach border border-dark-green font-thin"
+              radius="none"
+              onClick={() => console.log("Selected Grocer:", grocer)}
+            >
+              Select Grocer
+            </Button>
+          </div>
         </div>
         {isLoading && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
-          <Spinner size="lg" label="Gathering Ingredients!" color="success" classNames={{ label: "text-green-text" }}/>
-        </div>
-      )}
+          <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
+            <Spinner
+              size="lg"
+              label="Gathering Ingredients!"
+              color="success"
+              classNames={{ label: "text-green-text" }}
+            />
+          </div>
+        )}
         {krogerFoodUpcs.map((upcs, arrayIndex) => (
           <Card
             key={arrayIndex}
@@ -319,6 +391,7 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
+        {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
             radius="none"
@@ -332,6 +405,7 @@ export default function Page() {
           >
             Add to Cart
           </Button>
+        )}
         {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
