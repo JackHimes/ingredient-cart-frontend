@@ -71,11 +71,18 @@ export default function Page() {
     console.log(selectedItems);
   }, [selectedItems]);
 
+  // pass in selected grocer here?
   const handleFetchAccessToken = async () => {
     try {
-      const tokenHandler = getTokenHandler(grocer);
-      const config = await tokenHandler.fetchAccessToken(authCode, redirectUri);
-      setConfig(config);
+      const sessionToken = localStorage.getItem("customer_access_token");
+      if (sessionToken) {
+        const token = JSON.parse(sessionToken);
+        setStoredToken(token.access_token);
+        return;
+      }
+      // const response = await axios.get('/api/auth/fetchAccessToken', {
+      //   params: { userId: }
+      // )
     } catch (error) {
       console.error("Error fetching access token:", error);
     }
@@ -235,11 +242,12 @@ export default function Page() {
           </Button>
           <div className="flex">
             <Select
-              placeholder="Select a grocer"
+              placeholder="Grocer"
               radius="none"
-              className="my-2"
+              className="my-2 w-48"
               onChange={(value) => setGrocer(value.target.value)}
               value={grocer}
+              aria-label="Grocer"
             >
               {grocers.map((grocer) => (
                 <SelectItem

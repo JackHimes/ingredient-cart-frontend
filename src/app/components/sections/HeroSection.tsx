@@ -2,6 +2,7 @@
 import { Button } from "@nextui-org/react";
 import ParallaxBannerComponent from "../common/ParallaxBannerComponent";
 import Link from "next/link";
+import useStoreUser from "@/app/hooks/useStoreUser";
 
 export default function HeroSection() {
   return (
