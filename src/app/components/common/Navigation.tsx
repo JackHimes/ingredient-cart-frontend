@@ -50,7 +50,7 @@ export default function Navigation() {
       </NavbarBrand>
       <NavbarContent justify="end">
         <NavbarItem className="hidden lg:flex">
-          <UserButton afterSignOutUrl="/" />
+          <UserButton afterSignOutUrl="/sign-in" />
         </NavbarItem>
       </NavbarContent>
     </Navbar>
