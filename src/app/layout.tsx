@@ -22,7 +22,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      afterSignUpUrl='/welcome'
+      afterSignInUrl='/welcome'>
       <html lang="en">
         <body className={outfit.className}>
           <Providers>

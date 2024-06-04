@@ -1,11 +1,12 @@
 "use client"; 
 
-import { SignIn } from "@clerk/nextjs";
+import { SignUp } from "@clerk/nextjs";
 
 export default function Page() {
   return (
     <div className="flex items-center justify-center h-screen bg-off-white">
-      <SignIn
+      <SignUp
+        redirectUrl={"/welcome"}
         appearance={{
           elements: {
             formButtonPrimary:
@@ -21,6 +22,7 @@ export default function Page() {
             dividerText: "text-green-text",
           },
         }}
+
       />
     </div>
   );
