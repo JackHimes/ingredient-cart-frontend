@@ -1,12 +1,25 @@
 "use client";
 
-import { Button, Card, CardBody, Input } from "@nextui-org/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  Select,
+  SelectItem,
+  Input,
+} from "@nextui-org/react";
 import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import { ChangeEvent, useEffect, useState } from "react";
 import Footer from "../components/common/Footer";
-import {Spinner} from "@nextui-org/react";
+import { Spinner } from "@nextui-org/react";
+import { useUser } from "@clerk/nextjs";
+import { getTokenHandler } from "../factories/TokenHandlerFactory";
+import {
+  fetchKrogerAccessToken,
+  handleToken,
+} from "../handlers/UserTokenHandler";
 
 dotenv.config();
 
@@ -20,6 +33,25 @@ export default function Page() {
     thumbnailUrl?: string;
   };
 
+  type GrocerSelectItem = {
+    label: string;
+    value: string;
+    description: string;
+  };
+
+  let grocers: GrocerSelectItem[] = [
+    {
+      label: "Kroger",
+      value: "kroger",
+      description: "The second most popular pet in the world",
+    },
+    {
+      label: "Walmart",
+      value: "walmart",
+      description: "The second most popular pet in the world",
+    },
+  ];
+
   const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
@@ -27,18 +59,63 @@ export default function Page() {
   const [selectedItems, setSelectedItems] = useState<
     { upc: string; quantity: number }[]
   >([]);
+  const [authCode, setAuthCode] = useState("");
+  const [redirectUri, setRedirectUri] = useState("");
+  const [grocer, setGrocer] = useState("");
+  const [config, setConfig] = useState(null);
+  const user = useUser();
 
   useEffect(() => {
+    const fetchAndStoreToken = async () => {
+      const email = user.user?.emailAddresses[0].emailAddress;
+      if (email) {
+        const token = await handleToken(email);
+        if (token) {
+          setStoredToken(token);
+        }
+      }
+    };
+
+    fetchAndStoreToken();
+  }, [user]);
+
+  const openKrogerAuth = async (): Promise<any> => {
+    try {
+      const SCOPES = "profile.compact cart.basic:write product.compact";
+      const CLIENT_ID =
+        "ingredientcart-61754b7bda0bee174de5ec7c46e5351c6969468600073263900";
+
+      // Construct the URL
+      const authUrl = `https://api.kroger.com/v1/connect/oauth2/authorize?scope=${SCOPES}&response_type=code&client_id=${CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`;
+
+      window.location.href = authUrl;
+    } catch (error: any) {
+      // Handle errors
+      console.error("Error in Kroger authentication:", error.message);
+    }
+  };
+
+  const handleButtonClick = async () => {
     const storedTokenString = localStorage.getItem("customer_access_token");
-    if (storedTokenString) {
+    if (!storedTokenString) {
+      console.log("No token found, fetching new one");
+      await openKrogerAuth();
+    } else {
       const storedTokenObject = JSON.parse(storedTokenString);
       setStoredToken(storedTokenObject.access_token);
-    } else {
-      setStoredToken("");
+      // if (isTokenExpired(storedTokenObject.access_token)) {
+      //   console.log("Token expired, refreshing");
+      //   const refreshedToken = await refreshKrogerAccessToken(storedTokenObject.refresh_token, redirectUri);
+      //   if (refreshedToken) {
+      //     localStorage.setItem("customer_access_token", JSON.stringify(refreshedToken));
+      //     setStoredToken(refreshedToken.access_token);
+      //   }
+      // } else {
+      //   setStoredToken(storedTokenObject.access_token);
+      // }
     }
+  };
 
-    console.log(selectedItems);
-  }, [selectedItems]);
 
   const ingestRecipe = async (scriptName: string) => {
     setKrogerFoodUpcs([]);
@@ -61,7 +138,7 @@ export default function Page() {
       })
       .catch((error) => {
         console.error("Error Ingesting Recipe:", error);
-      })
+      });
   };
 
   const getItemsUpcs = async (items: string[]): Promise<any> => {
@@ -192,12 +269,44 @@ export default function Page() {
           >
             Extract Ingredients!
           </Button>
+          <div className="flex">
+            <Select
+              placeholder="Grocer"
+              radius="none"
+              className="my-2 w-48"
+              onChange={(value) => setGrocer(value.target.value)}
+              value={grocer}
+              aria-label="Grocer"
+            >
+              {grocers.map((grocer) => (
+                <SelectItem
+                  key={grocer.value}
+                  value={grocer.value}
+                  className="flex items-center text-black bg-white"
+                >
+                  {grocer.label}
+                </SelectItem>
+              ))}
+            </Select>
+            <Button
+              className="m-4 bg-peach border border-dark-green font-thin"
+              radius="none"
+              onClick={() => handleButtonClick()}
+            >
+              Select Grocer
+            </Button>
+          </div>
         </div>
         {isLoading && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
-          <Spinner size="lg" label="Gathering Ingredients!" color="success" classNames={{ label: "text-green-text" }}/>
-        </div>
-      )}
+          <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
+            <Spinner
+              size="lg"
+              label="Gathering Ingredients!"
+              color="success"
+              classNames={{ label: "text-green-text" }}
+            />
+          </div>
+        )}
         {krogerFoodUpcs.map((upcs, arrayIndex) => (
           <Card
             key={arrayIndex}
@@ -319,6 +428,7 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
+        {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
             radius="none"
@@ -332,6 +442,7 @@ export default function Page() {
           >
             Add to Cart
           </Button>
+        )}
         {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
