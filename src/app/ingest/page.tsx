@@ -1,12 +1,21 @@
 "use client";
 
-import { Button, Card, CardBody, Input } from "@nextui-org/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  Select,
+  SelectItem,
+  Input,
+} from "@nextui-org/react";
 import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
 import { ChangeEvent, useEffect, useState } from "react";
 import Footer from "../components/common/Footer";
-import {Spinner} from "@nextui-org/react";
+import { Spinner } from "@nextui-org/react";
+import { useUser } from "@clerk/nextjs";
+import { jwtDecode } from "jwt-decode";
 
 dotenv.config();
 
@@ -20,6 +29,20 @@ export default function Page() {
     thumbnailUrl?: string;
   };
 
+  type GrocerSelectItem = {
+    label: string;
+    value: string;
+    description: string;
+  };
+
+  let grocers: GrocerSelectItem[] = [
+    {
+      label: "Kroger",
+      value: "kroger",
+      description: "The second most popular pet in the world",
+    },
+  ];
+
   const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [storedToken, setStoredToken] = useState<string>("");
@@ -27,24 +50,101 @@ export default function Page() {
   const [selectedItems, setSelectedItems] = useState<
     { upc: string; quantity: number }[]
   >([]);
+  const [grocer, setGrocer] = useState("");
+  const { isLoaded, isSignedIn, user } = useUser();
 
   useEffect(() => {
-    const storedTokenString = localStorage.getItem("customer_access_token");
-    if (storedTokenString) {
-      const storedTokenObject = JSON.parse(storedTokenString);
-      setStoredToken(storedTokenObject.access_token);
-    } else {
-      setStoredToken("");
+    if(storedToken) {
+      console.log("useState Token has been updated");
     }
+  }, [storedToken]);
 
-    console.log(selectedItems);
-  }, [selectedItems]);
+  useEffect(() => {
+    const fetchAndStoreToken = async () => {
+      const localStoredToken = localStorage.getItem("customer_access_token");
+      console.log("Local Stored Token:");
+      
+      if (localStoredToken) {
+        const parsedToken = JSON.parse(localStoredToken);
+        console.log("Token parsed from local storage:");
+        
+        if (isTokenExpired(localStoredToken)) {
+          console.log("Token is expired, fetching a new one");
+          await fetchTokenFromBackend();
+        } else {
+          setStoredToken(localStoredToken);
+          console.log("Token found in local storage and is valid");
+        }
+      } else {
+        console.log("No token found in local storage, fetching from backend");
+        await fetchTokenFromBackend();
+      }
+    };
+  
+    const fetchTokenFromBackend = async () => {
+      if (user?.emailAddresses[0].emailAddress) {
+        console.log("Attempting to fetch from backend");
+        const endpoint = "http://localhost:3333/users/getToken";
+        try {
+          const response = await axios.get(endpoint, {
+            params: {
+              email: user.emailAddresses[0].emailAddress,
+            },
+            headers: {
+              accept: "application/json",
+            },
+          });
+          const responseData = response.data;
+          if (responseData) {
+            setStoredToken(responseData);
+            console.log("Setting token from backend");
+            localStorage.setItem("customer_access_token", JSON.stringify(responseData));
+            console.log("Token fetched from backend and stored");
+          }
+        } catch (error) {
+          console.error("Error fetching token from backend:", error);
+        }
+      }
+    };
+  
+    if (user) {
+      fetchAndStoreToken();
+    }
+  }, [user]);
+
+
+  const ensureToken = async () => {
+    return new Promise<void>((resolve, reject) => {
+      if (storedToken) {
+        resolve();
+      } else {
+        console.log("waiting for token to be set");
+        const checkTokenInterval = setInterval(() => {
+          if (storedToken) {
+            clearInterval(checkTokenInterval);
+            resolve();
+          }
+        }, 100); // Check every 100ms
+      }
+    });
+  };
+
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const decoded = jwtDecode(token) as { exp: number };
+      const currentTime = Math.floor(Date.now() / 1000);
+      return decoded.exp < currentTime;
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return true;
+    }
+  };
 
   const ingestRecipe = async (scriptName: string) => {
     setKrogerFoodUpcs([]);
     setSelectedItems([]);
     // TODO: REPLACE WITH ACTUAL ENDPOINT
-    const endpoint = "http://localhost:3333/tasks/scrape_recipe";
+    const endpoint = "http://localhost:3333/tasks/scrape_recipe"; 
 
     axios
       .get(endpoint, {
@@ -57,11 +157,11 @@ export default function Page() {
       })
       .then((response) => {
         scrappedFoods = response.data.result.ingredients as string[];
-        getItemsUpcs(scrappedFoods);
+        ensureToken().then(() => getItemsUpcs(scrappedFoods));
       })
       .catch((error) => {
         console.error("Error Ingesting Recipe:", error);
-      })
+      });
   };
 
   const getItemsUpcs = async (items: string[]): Promise<any> => {
@@ -85,8 +185,11 @@ export default function Page() {
 
         const url = `https://api.kroger.com/v1/products?filter.term=${processedItem}`;
 
+        await ensureToken();
+
         if (!storedToken) {
-          console.error("Undefine Token");
+          console.error("Undefined Token");
+          setIsLoading(false);
           return;
         }
 
@@ -161,8 +264,37 @@ export default function Page() {
       console.error("Error adding to cart: ", error.message);
     }
   };
+
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setRecipeUrl(event.target.value);
+  };
+
+  const openKrogerAuth = async (): Promise<any> => {
+    try {
+      const SCOPES = "profile.compact cart.basic:write product.compact";
+      const CLIENT_ID =
+        "ingredientcart-61754b7bda0bee174de5ec7c46e5351c6969468600073263900";
+
+      // Construct the URL
+      const authUrl = `https://api.kroger.com/v1/connect/oauth2/authorize?scope=${SCOPES}&response_type=code&client_id=${CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KROGER_REDIRECT_URI}`;
+
+      window.location.href = authUrl;
+    } catch (error: any) {
+      // Handle errors
+      console.error("Error in Kroger authentication:", error.message);
+    }
+  };
+
+  const handleButtonClick = async () => {
+    const storedTokenString = localStorage.getItem("customer_access_token");
+    if (!storedTokenString) {
+      console.log("No token found, fetching new one");
+      await openKrogerAuth();
+    } else {
+      console.log("Using Locally Stored Token");
+      const storedTokenObject = JSON.parse(storedTokenString);
+      setStoredToken(storedTokenObject.access_token);
+    }
   };
 
   return (
@@ -192,12 +324,44 @@ export default function Page() {
           >
             Extract Ingredients!
           </Button>
+          <div className="flex">
+            <Select
+              placeholder="Grocer"
+              radius="none"
+              className="my-2 w-48"
+              onChange={(value) => setGrocer(value.target.value)}
+              value={grocer}
+              aria-label="Grocer"
+            >
+              {grocers.map((grocer) => (
+                <SelectItem
+                  key={grocer.value}
+                  value={grocer.value}
+                  className="flex items-center text-black bg-white"
+                >
+                  {grocer.label}
+                </SelectItem>
+              ))}
+            </Select>
+            <Button
+              className="m-4 bg-peach border border-dark-green font-thin"
+              radius="none"
+              onClick={() => handleButtonClick()}
+            >
+              Select Grocer
+            </Button>
+          </div>
         </div>
         {isLoading && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
-          <Spinner size="lg" label="Gathering Ingredients!" color="success" classNames={{ label: "text-green-text" }}/>
-        </div>
-      )}
+          <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
+            <Spinner
+              size="lg"
+              label="Gathering Ingredients!"
+              color="success"
+              classNames={{ label: "text-green-text" }}
+            />
+          </div>
+        )}
         {krogerFoodUpcs.map((upcs, arrayIndex) => (
           <Card
             key={arrayIndex}
@@ -319,19 +483,19 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
-          <Button
-            className="my-8 bg-peach border border-dark-green font-thin"
-            radius="none"
-            isDisabled={selectedItems.length === 0}
-            onClick={() => {
-              addToCart(selectedItems);
-              setSelectedItems([]);
-              setKrogerFoodUpcs([]);
-              setRecipeUrl("");
-            }}
-          >
-            Add to Cart
-          </Button>
+        <Button
+          className="my-8 bg-peach border border-dark-green font-thin"
+          radius="none"
+          isDisabled={selectedItems.length === 0}
+          onClick={() => {
+            addToCart(selectedItems);
+            setSelectedItems([]);
+            setKrogerFoodUpcs([]);
+            setRecipeUrl("");
+          }}
+        >
+          Add to Cart
+        </Button>
         {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"

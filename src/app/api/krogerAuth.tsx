@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { KrogerAccessJwt } from '../types/KrogerAccessJwt';
 
-export const fetchAccessToken = async (authorizationCode: string, redirectUri: string): Promise<KrogerAccessJwt> => {
+export const fetchAccessToken = async (authorizationCode: string, redirectUri: string): Promise<any> => {
   try {
-    const response = await axios.post<KrogerAccessJwt>(
+    const response = await axios.post<any>(
       "https://api.kroger.com/v1/connect/oauth2/token",
       `grant_type=authorization_code&code=${encodeURIComponent(authorizationCode)}&redirect_uri=${encodeURIComponent(redirectUri)}`,
       {
