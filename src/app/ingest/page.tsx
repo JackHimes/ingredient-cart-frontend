@@ -11,13 +11,32 @@ import {
 import Navbar from "../components/common/Navigation";
 import axios from "axios";
 import * as dotenv from "dotenv";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState, useCallback } from "react";
 import Footer from "../components/common/Footer";
 import { Spinner } from "@nextui-org/react";
 import { useUser } from "@clerk/nextjs";
-import { jwtDecode } from "jwt-decode";
+import { useSearchParams } from "next/navigation";
+import { getItemsUpcs } from "../services/productService";
+import { waitForToken, ensureToken } from "../services/tokenService";
 
 dotenv.config();
+
+const retry = async <T,>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delay = 1000,
+  shouldRetry: (error: any) => boolean = () => true
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries > 0 && shouldRetry(error)) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return retry(operation, retries - 1, delay, shouldRetry);
+    }
+    throw error;
+  }
+};
 
 export default function Page() {
   let scrappedFoods: string[] = [];
@@ -51,211 +70,101 @@ export default function Page() {
     { upc: string; quantity: number }[]
   >([]);
   const [grocer, setGrocer] = useState("");
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { user } = useUser();
+  const searchParams = useSearchParams();
+  const [token, setToken] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if(storedToken) {
-      console.log("useState Token has been updated");
+    const recipeUrl = searchParams.get("recipeUrl");
+    if (recipeUrl) {
+      setRecipeUrl(recipeUrl as string);
+      ingestRecipe(recipeUrl as string);
     }
-  }, [storedToken]);
+  }, [searchParams]);
 
   useEffect(() => {
-    const fetchAndStoreToken = async () => {
-      const localStoredToken = localStorage.getItem("customer_access_token");
-      console.log("Local Stored Token:");
-      
-      if (localStoredToken) {
-        const parsedToken = JSON.parse(localStoredToken);
-        console.log("Token parsed from local storage:");
-        
-        if (isTokenExpired(localStoredToken)) {
-          console.log("Token is expired, fetching a new one");
-          await fetchTokenFromBackend();
-        } else {
-          setStoredToken(localStoredToken);
-          console.log("Token found in local storage and is valid");
-        }
-      } else {
-        console.log("No token found in local storage, fetching from backend");
-        await fetchTokenFromBackend();
+    const initializeToken = async () => {
+      if (user?.emailAddresses[0].emailAddress) {
+        const newToken = await ensureToken(user.emailAddresses[0].emailAddress);
+        setToken(newToken);
       }
     };
-  
-    const fetchTokenFromBackend = async () => {
-      if (user?.emailAddresses[0].emailAddress) {
-        console.log("Attempting to fetch from backend");
-        const endpoint = "http://localhost:3333/users/getToken";
-        try {
+
+    initializeToken();
+  }, [user]);
+
+  const ingestRecipe = useCallback(
+    async (url: string) => {
+      setKrogerFoodUpcs([]);
+      setSelectedItems([]);
+      setIsLoading(true);
+      setError(null);
+
+      const endpoint = "http://localhost:3333/tasks/scrape_recipe";
+
+      try {
+        const scrapeOperation = async (): Promise<string[]> => {
           const response = await axios.get(endpoint, {
             params: {
-              email: user.emailAddresses[0].emailAddress,
+              recipeUrl: url,
             },
             headers: {
               accept: "application/json",
             },
           });
-          const responseData = response.data;
-          if (responseData) {
-            setStoredToken(responseData);
-            console.log("Setting token from backend");
-            localStorage.setItem("customer_access_token", JSON.stringify(responseData));
-            console.log("Token fetched from backend and stored");
+
+          if (
+            !response.data ||
+            !response.data.result ||
+            !Array.isArray(response.data.result.ingredients)
+          ) {
+            throw new Error("Invalid response format from recipe scraper");
           }
-        } catch (error) {
-          console.error("Error fetching token from backend:", error);
+
+          return response.data.result.ingredients;
+        };
+
+        const scrappedFoods = await retry(scrapeOperation, 3, 2000);
+
+        if (scrappedFoods.length === 0) {
+          throw new Error("No ingredients found in the recipe");
         }
-      }
-    };
-  
-    if (user) {
-      fetchAndStoreToken();
-    }
-  }, [user]);
 
+        // Wait for token to be available
+        await waitForToken();
+        const currentToken = await ensureToken(
+          user?.emailAddresses[0].emailAddress || ""
+        );
 
-  const ensureToken = async () => {
-    return new Promise<void>((resolve, reject) => {
-      if (storedToken) {
-        resolve();
-      } else {
-        console.log("waiting for token to be set");
-        const checkTokenInterval = setInterval(() => {
-          if (storedToken) {
-            clearInterval(checkTokenInterval);
-            resolve();
-          }
-        }, 100); // Check every 100ms
-      }
-    });
-  };
+        if (!currentToken) {
+          throw new Error("Token not available");
+        }
 
-  const isTokenExpired = (token: string): boolean => {
-    try {
-      const decoded = jwtDecode(token) as { exp: number };
-      const currentTime = Math.floor(Date.now() / 1000);
-      return decoded.exp < currentTime;
-    } catch (error) {
-      console.error("Error decoding token:", error);
-      return true;
-    }
-  };
+        const upcs = await getItemsUpcs(scrappedFoods, currentToken);
+        console.log(upcs);
 
-  const ingestRecipe = async (scriptName: string) => {
-    setKrogerFoodUpcs([]);
-    setSelectedItems([]);
-    // TODO: REPLACE WITH ACTUAL ENDPOINT
-    const endpoint = "http://localhost:3333/tasks/scrape_recipe"; 
-
-    axios
-      .get(endpoint, {
-        params: {
-          recipeUrl: recipeUrl,
-        },
-        headers: {
-          accept: "application/json",
-        },
-      })
-      .then((response) => {
-        scrappedFoods = response.data.result.ingredients as string[];
-        ensureToken().then(() => getItemsUpcs(scrappedFoods));
-      })
-      .catch((error) => {
+        setKrogerFoodUpcs(upcs);
+      } catch (error: any) {
         console.error("Error Ingesting Recipe:", error);
-      });
-  };
-
-  const getItemsUpcs = async (items: string[]): Promise<any> => {
-    const upcsArray: {
-      item: string;
-      upc: string;
-      description: string;
-      thumbnailUrl?: string;
-      size?: string;
-    }[][] = [];
-
-    try {
-      setIsLoading(true); // Start Spinner
-      for (const item of items) {
-        // Kroger only lets 8 terms per search
-        let processedItem = item;
-        if (item.split(" ").length > 8) {
-          console.log("Item is longer than 8 words:", item);
-          processedItem = item.split(" ").slice(0, 8).join(" ");
-        }
-
-        const url = `https://api.kroger.com/v1/products?filter.term=${processedItem}`;
-
-        await ensureToken();
-
-        if (!storedToken) {
-          console.error("Undefined Token");
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await axios.get(url, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${storedToken}`,
-          },
-        });
-
-        if (response.data.data.length > 0) {
-          console.log(response.data.data);
-
-          const upcs = response.data.data.slice(0, 5).map((data: any) => {
-            const thumbnailImage = data.images.find(
-              (image: any) => image.perspective === "front"
-            );
-            const thumbnailUrl = thumbnailImage
-              ? thumbnailImage.sizes[3].url
-              : undefined;
-            const size = data.items.length > 0 ? data.items[0].size : undefined;
-
-            return {
-              item: processedItem,
-              upc: data.upc,
-              description: data.description,
-              size: size,
-              thumbnailUrl: thumbnailUrl,
-            };
-          });
-
-          upcsArray.push(upcs);
-        } else {
-          // TODO: HANDLE CASE WHEN NO ITEMS ARE FOUND IN SEARCH
-          console.log("NO ITEM FOUND:" + item);
-        }
+        setError(
+          error.message || "An error occurred while ingesting the recipe"
+        );
+      } finally {
+        setIsLoading(false);
       }
-      console.log(upcsArray);
-      setKrogerFoodUpcs(upcsArray);
-      setIsLoading(false); // Stop Spinner
-    } catch (error) {
-      console.error("Error searching items:", error);
-    }
-  };
+    },
+    [user, setKrogerFoodUpcs, setSelectedItems, setIsLoading, setError]
+  );
 
   const addToCart = async (items: { upc: string; quantity: number }[]) => {
-    const payloadItems = items.map((item) => ({
-      upc: item.upc,
-      quantity: item.quantity,
-      modality: "PICKUP",
-    }));
-
-    const payload = {
-      items: payloadItems,
-    };
-
-    console.log(payload);
-
     try {
-      const response = await axios.put(
-        "https://api.kroger.com/v1/cart/add",
-        payload,
+      const response = await axios.post(
+        "http://localhost:3333/api/cart/add",
+        { items },
         {
           headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${storedToken}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -320,7 +229,7 @@ export default function Page() {
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"
             radius="none"
-            onClick={() => ingestRecipe("scrape_recipe")}
+            onClick={() => ingestRecipe(recipeUrl)}
           >
             Extract Ingredients!
           </Button>
