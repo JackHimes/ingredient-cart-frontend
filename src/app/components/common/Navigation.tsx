@@ -36,9 +36,9 @@ export default function Navigation() {
           <Link
             className="font-thin"
             color="foreground"
-            href="../configuration"
+            href="../recipes"
           >
-            Settings
+            Recipes
           </Link>
         </NavbarItem>
       </NavbarContent>
