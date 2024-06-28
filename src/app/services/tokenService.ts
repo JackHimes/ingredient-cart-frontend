@@ -4,7 +4,12 @@ import { jwtDecode } from 'jwt-decode';
 
 let storedToken = ''; // Token storage
 
-const isTokenExpired = (token: string): boolean => {
+const isTokenExpired = (token: string | null): boolean => {
+  if (!token || typeof token !== 'string') {
+    console.error("Invalid token:", token);
+    return true; // Consider invalid tokens as expired
+  }
+
   try {
     const decoded = jwtDecode(token) as { exp: number };
     const currentTime = Math.floor(Date.now() / 1000);
@@ -18,12 +23,21 @@ const isTokenExpired = (token: string): boolean => {
 const ensureToken = async (userEmail: string) => {
   const localStoredToken = localStorage.getItem("customer_access_token");
   if (localStoredToken) {
-    const parsedToken = JSON.parse(localStoredToken);
-    if (isTokenExpired(parsedToken)) {
+    try {
+      const parsedToken = JSON.parse(localStoredToken);
+      if (typeof parsedToken !== 'string') {
+        console.error("Stored token is not a string:", parsedToken);
+        return await fetchTokenFromBackend(userEmail);
+      }
+      if (isTokenExpired(parsedToken)) {
+        return await fetchTokenFromBackend(userEmail);
+      } else {
+        storedToken = parsedToken;
+        return parsedToken;
+      }
+    } catch (error) {
+      console.error("Error parsing stored token:", error);
       return await fetchTokenFromBackend(userEmail);
-    } else {
-      storedToken = parsedToken;
-      return parsedToken;
     }
   } else {
     return await fetchTokenFromBackend(userEmail);
@@ -42,17 +56,19 @@ const fetchTokenFromBackend = async (userEmail: string) => {
       },
     });
     const responseData = response.data;
-    if (responseData) {
+    if (responseData && typeof responseData === 'string') {
       localStorage.setItem("customer_access_token", JSON.stringify(responseData));
       storedToken = responseData;
       return responseData;
+    } else {
+      console.error("Invalid token received from backend:", responseData);
+      return null;
     }
   } catch (error) {
     console.error("Error fetching token from backend:", error);
   }
   return null;
 };
-
 const waitForToken = async (): Promise<void> => {
   return new Promise<void>((resolve) => {
     if (storedToken) {

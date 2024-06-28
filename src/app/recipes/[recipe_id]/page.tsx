@@ -58,9 +58,10 @@ export default function RecipeDetail({ params }: RecipeDetailProps) {
   }, [recipe_id, isLoaded, user]);
 
 
-  const handleIngest = () => {
+  const handleAddToCart = () => {
     if (!recipe) return;
-    router.push(`/ingest?recipeUrl=${encodeURIComponent(recipe.url)}`);
+    const encodedIngredients = encodeURIComponent(JSON.stringify(recipe.ingredients));
+    router.push(`/ingest?ingredients=${encodedIngredients}`);
   };
 
   const handleToggleFavorite = async () => {
@@ -113,7 +114,7 @@ export default function RecipeDetail({ params }: RecipeDetailProps) {
         )}
         <div className="my-4">
           <Button
-            onClick={handleIngest}
+            onClick={handleAddToCart}
             className="bg-peach border border-dark-green font-thin"
             radius="none"
           >

@@ -8,6 +8,7 @@ export default function SignInPage() {
       <SignIn
         routing="path"
         path="/sign-in"
+        forceRedirectUrl="/"
         appearance={{
           elements: {
             formButtonPrimary: "bg-peach text-green-text hover:bg-green-text hover:text-off-white text-sm normal-case",
