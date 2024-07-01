@@ -151,7 +151,7 @@ export default function Page() {
                   ))}
                 </div>
                 {favoriteRecipes.length === 0 && (
-                  <p>You haven't added any favorite recipes yet.</p>
+                  <p>You haven&apos;t added any favorite recipes yet.</p>
                 )}
               </div>
               <div className="mt-8">
@@ -162,7 +162,7 @@ export default function Page() {
                   ))}
                 </div>
                 {recentRecipes.length === 0 && (
-                  <p>You haven't viewed any recipes recently.</p>
+                  <p>You haven&apos;t viewed any recipes recently.</p>
                 )}
               </div>
             </div>
