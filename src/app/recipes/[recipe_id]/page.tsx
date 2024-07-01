@@ -59,7 +59,7 @@ export default function RecipeDetail({ params }: RecipeDetailProps) {
 
 
   const handleIngest = () => {
-    if (!recipe) return;
+    if (!recipe || !recipe.url) return;
     router.push(`/ingest?recipeUrl=${encodeURIComponent(recipe.url)}`);
   };
 
