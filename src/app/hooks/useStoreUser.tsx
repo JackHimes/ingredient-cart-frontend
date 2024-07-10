@@ -11,13 +11,6 @@ const useStoreUser = () => {
   const [userDataStored, setUserDataStored] = useState(false);
 
   useEffect(() => {
-    console.log("Auth loaded:", isAuthLoaded);
-    console.log("Signed in:", isSignedIn);
-    console.log("Session loaded:", isSessionLoaded);
-    console.log("User loaded:", isUserLoaded);
-    console.log("Session:", session);
-    console.log("User:", user);
-
     if (isAuthLoaded && isSignedIn && isSessionLoaded && isUserLoaded && user && !userDataStored) {
       const storeUser = async () => {
         try {
@@ -25,16 +18,24 @@ const useStoreUser = () => {
             email: user.emailAddresses[0].emailAddress,
             fullName: `${user.firstName} ${user.lastName}`,
             phoneNumbers: user.phoneNumbers.map((phone) => phone.phoneNumber),
+            verified: true,
+            favoriteRecipes: [],
+            recentRecipes: []
           };
 
-          console.log("Storing user data:", userData);
+          console.log("Sending user data:", JSON.stringify(userData, null, 2));
 
-          await axios.post("http://localhost:3333/users", userData);
-          console.log("User stored successfully!");
-          setUserDataStored(true); // Prevent multiple API calls
-
+          const response = await axios.post("http://localhost:3333/users", userData);
+          console.log("User stored successfully!", JSON.stringify(response.data, null, 2));
+          setUserDataStored(true);
         } catch (error) {
-          console.error("Error storing user:", error);
+          if (axios.isAxiosError(error)) {
+            console.error("Error storing user:", error.response?.data || error.message);
+            console.error("Error status:", error.response?.status);
+            console.error("Error headers:", error.response?.headers);
+          } else {
+            console.error("Error storing user:", error);
+          }
         }
       };
 

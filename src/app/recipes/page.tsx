@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/common/Navigation.tsx";
 import Image from "next/image";
 import { Tabs, Tab } from "@nextui-org/tabs";
@@ -11,6 +11,7 @@ import axios from "axios";
 import { Recipe } from "../types/Recipe.tsx";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import RecipeSearchBar from "../components/common/RecipeSearchBar";
 
 dotenv.config();
 
@@ -58,10 +59,25 @@ const fetchRecentRecipes = async (userEmail: string): Promise<Recipe[]> => {
   }
 };
 
+const searchRecipes = async (query: string): Promise<Recipe[]> => {
+  try {
+    const response = await axios.get(`http://localhost:3333/recipes`, {
+      params: { title: query }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error searching recipes:", error);
+    return [];
+  }
+};
+
 export default function Page() {
   const [popularRecipes, setPopularRecipes] = useState<Recipe[]>([]);
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([]);
+  const [searchResults, setSearchResults] = useState<Recipe[]>([]);
+  const [activeTab, setActiveTab] = useState("popular");
+  const [isSearching, setIsSearching] = useState(false);
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
@@ -93,6 +109,20 @@ export default function Page() {
     getFavoriteRecipes();
   }, [isLoaded, user]);
 
+  const handleSearch = async (query: string) => {
+    if (query.trim() === '') {
+      setSearchResults([]);
+      setActiveTab('popular');
+      return;
+    }
+
+    setIsSearching(true);
+    const results = await searchRecipes(query);
+    setSearchResults(results);
+    setActiveTab('search');
+    setIsSearching(false);
+  };
+
   const handleAddNewRecipe = () => {
     router.push("/recipes/new");
   };
@@ -114,7 +144,7 @@ export default function Page() {
         <h1 className="text-5xl">Recipes</h1>
         <Button
           onClick={handleAddNewRecipe}
-          className="bg-peach border border-dark-green font-thin"
+          className="my-5 bg-peach border border-dark-green font-thin"
           radius="none"
         >
           Add New Recipe
@@ -124,8 +154,16 @@ export default function Page() {
           Search through our list of recipes for quick and easy meals.
           Don&apos;t see your favorite recipe? Add them here!
         </p>
-        <Tabs variant="underlined" classNames={{ tab: "text-dark-green " }}>
-          <Tab title="Popular Recipes">
+
+        <RecipeSearchBar onSearch={handleSearch} />
+
+        <Tabs
+          variant="underlined"
+          classNames={{ tab: "text-dark-green " }}
+          selectedKey={activeTab}
+          onSelectionChange={(key) => setActiveTab(key as string)}
+        >
+          <Tab key="popular" title="Popular Recipes">
             <div>
               <Divider className="bg-dark-green my-4"></Divider>
               <h2 className="text-3xl mb-3">Popular</h2>
@@ -136,7 +174,7 @@ export default function Page() {
               </div>
             </div>
           </Tab>
-          <Tab title="Your Recipes">
+          <Tab key="your" title="Your Recipes">
             <div className="flex text-xl">
               <p>Favorites</p>
               <p className="px-4">Recents</p>
@@ -151,7 +189,7 @@ export default function Page() {
                   ))}
                 </div>
                 {favoriteRecipes.length === 0 && (
-                  <p>You haven't added any favorite recipes yet.</p>
+                  <p>You haven&apos;t added any favorite recipes yet.</p>
                 )}
               </div>
               <div className="mt-8">
@@ -162,12 +200,33 @@ export default function Page() {
                   ))}
                 </div>
                 {recentRecipes.length === 0 && (
-                  <p>You haven't viewed any recipes recently.</p>
+                  <p>You haven&apos;t viewed any recipes recently.</p>
                 )}
               </div>
             </div>
           </Tab>
-          <Tab title="Pantry Suggestions"></Tab>
+          <Tab key="search" title="Search Results">
+            <div>
+              <Divider className="bg-dark-green my-4"></Divider>
+              <h2 className="text-3xl mb-3">Search Results</h2>
+              {isSearching ? (
+                <p>Searching...</p>
+              ) : (
+                <>
+                  <div className="flex flex-wrap -m-2">
+                    {searchResults.map((recipe) => (
+                      <RecipeCard key={recipe._id} recipe={recipe} />
+                    ))}
+                  </div>
+                  {searchResults.length === 0 && (
+                    <p>No recipes found. Try a different search term.</p>
+                  )}
+                </>
+              )}
+            </div>
+          </Tab>
+
+          <Tab key="pantry" title="Pantry Suggestions"></Tab>
         </Tabs>
       </div>
     </div>

@@ -18,6 +18,10 @@ import { useUser } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { getItemsUpcs } from "../services/productService";
 import { waitForToken, ensureToken } from "../services/tokenService";
+import TokenStatusIndicator from "../components/common/TokenStatusIndicator";
+import recipeScraperService, {
+  ScrapedRecipe,
+} from "../services/recipeScraperService";
 
 dotenv.config();
 
@@ -38,7 +42,7 @@ const retry = async <T,>(
   }
 };
 
-export default function Page() {
+export default function Ingest() {
   let scrappedFoods: string[] = [];
   type Item = {
     item: string;
@@ -64,7 +68,6 @@ export default function Page() {
 
   const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
   const [recipeUrl, setRecipeUrl] = useState<string>("");
-  const [storedToken, setStoredToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<
     { upc: string; quantity: number }[]
@@ -74,25 +77,82 @@ export default function Page() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [scrapedRecipe, setScrapedRecipe] = useState<ScrapedRecipe | null>(
+    null
+  );
+  const [tokenStatus, setTokenStatus] = useState<
+    "loading" | "valid" | "invalid"
+  >("loading");
 
   useEffect(() => {
-    const recipeUrl = searchParams.get("recipeUrl");
-    if (recipeUrl) {
-      setRecipeUrl(recipeUrl as string);
-      ingestRecipe(recipeUrl as string);
+    const encodedIngredients = searchParams.get("ingredients");
+    if (encodedIngredients) {
+      const decodedIngredients = JSON.parse(
+        decodeURIComponent(encodedIngredients)
+      );
+      processIngredients(decodedIngredients);
     }
   }, [searchParams]);
 
   useEffect(() => {
     const initializeToken = async () => {
       if (user?.emailAddresses[0].emailAddress) {
-        const newToken = await ensureToken(user.emailAddresses[0].emailAddress);
-        setToken(newToken);
+        setTokenStatus("loading");
+        console.log(tokenStatus);
+
+        try {
+          const newToken = await ensureToken(
+            user.emailAddresses[0].emailAddress
+          );
+          if (newToken) {
+            setToken(newToken);
+            setTokenStatus("valid");
+            console.log(tokenStatus);
+          } else {
+            setToken("");
+            setTokenStatus("invalid");
+            console.log(tokenStatus);
+          }
+        } catch (error) {
+          console.error("Error initializing token:", error);
+          setToken("");
+          setTokenStatus("invalid");
+          console.log(tokenStatus);
+        }
       }
     };
 
     initializeToken();
   }, [user]);
+
+  const processIngredients = useCallback(
+    async (ingredientsList: string[]) => {
+      setKrogerFoodUpcs([]);
+      setSelectedItems([]);
+      setIsLoading(true);
+
+      try {
+        await waitForToken();
+        const currentToken = await ensureToken(
+          user?.emailAddresses[0].emailAddress || ""
+        );
+
+        if (!currentToken) {
+          throw new Error("Token not available");
+        }
+
+        const upcs = await getItemsUpcs(ingredientsList, currentToken);
+        console.log(upcs);
+
+        setKrogerFoodUpcs(upcs);
+      } catch (error: any) {
+        console.error("Error processing ingredients:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user]
+  );
 
   const ingestRecipe = useCallback(
     async (url: string) => {
@@ -101,33 +161,14 @@ export default function Page() {
       setIsLoading(true);
       setError(null);
 
-      const endpoint = "http://localhost:3333/tasks/scrape_recipe";
-
       try {
-        const scrapeOperation = async (): Promise<string[]> => {
-          const response = await axios.get(endpoint, {
-            params: {
-              recipeUrl: url,
-            },
-            headers: {
-              accept: "application/json",
-            },
-          });
+        const scrapedRecipe = await recipeScraperService.scrapeRecipe(url);
+        setScrapedRecipe(scrapedRecipe);
 
-          if (
-            !response.data ||
-            !response.data.result ||
-            !Array.isArray(response.data.result.ingredients)
-          ) {
-            throw new Error("Invalid response format from recipe scraper");
-          }
-
-          return response.data.result.ingredients;
-        };
-
-        const scrappedFoods = await retry(scrapeOperation, 3, 2000);
-
-        if (scrappedFoods.length === 0) {
+        if (
+          !scrapedRecipe.ingredients ||
+          scrapedRecipe.ingredients.length === 0
+        ) {
           throw new Error("No ingredients found in the recipe");
         }
 
@@ -141,7 +182,10 @@ export default function Page() {
           throw new Error("Token not available");
         }
 
-        const upcs = await getItemsUpcs(scrappedFoods, currentToken);
+        const upcs = await getItemsUpcs(
+          scrapedRecipe.ingredients,
+          currentToken
+        );
         console.log(upcs);
 
         setKrogerFoodUpcs(upcs);
@@ -154,7 +198,7 @@ export default function Page() {
         setIsLoading(false);
       }
     },
-    [user, setKrogerFoodUpcs, setSelectedItems, setIsLoading, setError]
+    [user]
   );
 
   const addToCart = async (items: { upc: string; quantity: number }[]) => {
@@ -202,7 +246,6 @@ export default function Page() {
     } else {
       console.log("Using Locally Stored Token");
       const storedTokenObject = JSON.parse(storedTokenString);
-      setStoredToken(storedTokenObject.access_token);
     }
   };
 
@@ -230,10 +273,11 @@ export default function Page() {
             className="my-8 bg-peach border border-dark-green font-thin"
             radius="none"
             onClick={() => ingestRecipe(recipeUrl)}
+            disabled={tokenStatus !== "valid"}
           >
             Extract Ingredients!
           </Button>
-          <div className="flex">
+          <div className="flex items-center">
             <Select
               placeholder="Grocer"
               radius="none"
@@ -253,16 +297,31 @@ export default function Page() {
               ))}
             </Select>
             <Button
-              className="m-4 bg-peach border border-dark-green font-thin"
+              className="mx-4 bg-peach border border-dark-green font-thin"
               radius="none"
               onClick={() => handleButtonClick()}
+              disabled={tokenStatus === "loading"}
             >
-              Select Grocer
+              {tokenStatus === "invalid" ? "Authenticate" : "Select Grocer"}
             </Button>
+            <TokenStatusIndicator status={tokenStatus} />
           </div>
         </div>
+        {scrapedRecipe && (
+          <Card 
+          className="flex flex-col mx-10 mb-4 px-2 bg-off-white border border-border-green"
+          radius="none"
+          shadow="none">
+            <CardBody className="text-green-text">
+              <h2 className="text-xl font-bold">{scrapedRecipe.title}</h2>
+              <p>{scrapedRecipe.description}</p>
+              <p>Cuisine: {scrapedRecipe.cuisine}</p>
+              <p>Total Time: {scrapedRecipe.total_time} minutes</p>
+            </CardBody>
+          </Card>
+        )}
         {isLoading && (
-          <div className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-opacity-50 bg-black">
+          <div className="top-0 left-0 right-0 bottom-0 flex items-center justify-center">
             <Spinner
               size="lg"
               label="Gathering Ingredients!"
@@ -392,19 +451,21 @@ export default function Page() {
             </CardBody>
           </Card>
         ))}
-        <Button
-          className="my-8 bg-peach border border-dark-green font-thin"
-          radius="none"
-          isDisabled={selectedItems.length === 0}
-          onClick={() => {
-            addToCart(selectedItems);
-            setSelectedItems([]);
-            setKrogerFoodUpcs([]);
-            setRecipeUrl("");
-          }}
-        >
-          Add to Cart
-        </Button>
+        {krogerFoodUpcs.length > 0 && (
+          <Button
+            className="my-8 bg-peach border border-dark-green font-thin"
+            radius="none"
+            isDisabled={selectedItems.length === 0}
+            onClick={() => {
+              addToCart(selectedItems);
+              setSelectedItems([]);
+              setKrogerFoodUpcs([]);
+              setRecipeUrl("");
+            }}
+          >
+            Add to Cart
+          </Button>
+        )}
         {selectedItems.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin"

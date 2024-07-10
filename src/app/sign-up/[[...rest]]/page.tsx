@@ -8,6 +8,7 @@ export default function SignUpPage() {
       <SignUp
         routing="path"
         path="/sign-up"
+        forceRedirectUrl="/welcome"
         appearance={{
           elements: {
             formButtonPrimary: "bg-peach text-green-text hover:bg-green-text hover:text-off-white text-sm normal-case",
