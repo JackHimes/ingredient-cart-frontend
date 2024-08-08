@@ -1,15 +1,16 @@
 import Image from 'next/image';
 
 export default function IngredientCartLogo() {
-  return(
-  <div className='mt-4 mb-2'>
-    <Image
-      priority
-      src={'/ingredient-cart-logo.png'}
-      alt="Follow us on Twitter"
-      width={150}
-      height={150}
-    />
-  </div>
+  return (
+    <div className='mt-4 mb-2 flex justify-center items-center'>
+      <Image
+        priority
+        src={'/ingredient-cart-logo.png'}
+        alt="Ingredient Cart Logo"
+        width={150} 
+        height={150}
+        className="w-auto h-auto max-h-[120px]"
+      />
+    </div>
   )
 }

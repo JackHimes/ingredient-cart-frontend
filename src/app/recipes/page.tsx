@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/common/Navigation.tsx";
 import Image from "next/image";
 import { Tabs, Tab } from "@nextui-org/tabs";
@@ -84,8 +84,6 @@ export default function Page() {
   useEffect(() => {
     const getPopularRecipes = async () => {
       const recipes = await fetchPopularRecipes();
-      console.log(recipes);
-
       setPopularRecipes(recipes);
     };
 
@@ -140,8 +138,8 @@ export default function Page() {
           alt="Recipe"
         />
       </div>
-      <div className="p-8 m-2">
-        <h1 className="text-5xl">Recipes</h1>
+      <div className="p-4 md:p-8 m-2">
+        <h1 className="text-3xl md:text-5xl">Recipes</h1>
         <Button
           onClick={handleAddNewRecipe}
           className="my-5 bg-peach border border-dark-green font-thin"
@@ -157,77 +155,79 @@ export default function Page() {
 
         <RecipeSearchBar onSearch={handleSearch} />
 
-        <Tabs
-          variant="underlined"
-          classNames={{ tab: "text-dark-green " }}
-          selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as string)}
-        >
-          <Tab key="popular" title="Popular Recipes">
-            <div>
-              <Divider className="bg-dark-green my-4"></Divider>
-              <h2 className="text-3xl mb-3">Popular</h2>
-              <div className="flex flex-wrap -m-2">
-                {popularRecipes.map((recipe) => (
-                  <RecipeCard key={recipe._id} recipe={recipe} />
-                ))}
-              </div>
-            </div>
-          </Tab>
-          <Tab key="your" title="Your Recipes">
-            <div className="flex text-xl">
-              <p>Favorites</p>
-              <p className="px-4">Recents</p>
-            </div>
-            <Divider className="bg-dark-green my-4"></Divider>
-            <div>
+        <div className="flex flex-wrap">
+          <Tabs
+            variant="underlined"
+            classNames={{ tabList: "flex-wrap", tab: "flex-1 min-w-[120px] text-center" }}
+            selectedKey={activeTab}
+            onSelectionChange={(key) => setActiveTab(key as string)}
+          >
+            <Tab key="popular" title="Popular Recipes">
               <div>
-                <h1 className="text-3xl mb-3">Favorite Recipes</h1>
+                <Divider className="bg-dark-green my-4"></Divider>
+                <h2 className="text-2xl md:text-3xl mb-3">Popular</h2>
                 <div className="flex flex-wrap -m-2">
-                  {favoriteRecipes.map((recipe) => (
+                  {popularRecipes.map((recipe) => (
                     <RecipeCard key={recipe._id} recipe={recipe} />
                   ))}
                 </div>
-                {favoriteRecipes.length === 0 && (
-                  <p>You haven&apos;t added any favorite recipes yet.</p>
-                )}
               </div>
-              <div className="mt-8">
-                <h1 className="text-3xl mb-3">Recent Recipes</h1>
-                <div className="flex flex-wrap -m-2">
-                  {recentRecipes.map((recipe) => (
-                    <RecipeCard key={recipe._id} recipe={recipe} />
-                  ))}
-                </div>
-                {recentRecipes.length === 0 && (
-                  <p>You haven&apos;t viewed any recipes recently.</p>
-                )}
+            </Tab>
+            <Tab key="your" title="Your Recipes">
+              <div className="flex flex-col md:flex-row text-xl">
+                <p className="mb-2 md:mb-0">Favorites</p>
+                <p className="px-0 md:px-4">Recents</p>
               </div>
-            </div>
-          </Tab>
-          <Tab key="search" title="Search Results">
-            <div>
               <Divider className="bg-dark-green my-4"></Divider>
-              <h2 className="text-3xl mb-3">Search Results</h2>
-              {isSearching ? (
-                <p>Searching...</p>
-              ) : (
-                <>
+              <div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl mb-3">Favorite Recipes</h1>
                   <div className="flex flex-wrap -m-2">
-                    {searchResults.map((recipe) => (
+                    {favoriteRecipes.map((recipe) => (
                       <RecipeCard key={recipe._id} recipe={recipe} />
                     ))}
                   </div>
-                  {searchResults.length === 0 && (
-                    <p>No recipes found. Try a different search term.</p>
+                  {favoriteRecipes.length === 0 && (
+                    <p>You haven&apos;t added any favorite recipes yet.</p>
                   )}
-                </>
-              )}
-            </div>
-          </Tab>
+                </div>
+                <div className="mt-8">
+                  <h1 className="text-2xl md:text-3xl mb-3">Recent Recipes</h1>
+                  <div className="flex flex-wrap -m-2">
+                    {recentRecipes.map((recipe) => (
+                      <RecipeCard key={recipe._id} recipe={recipe} />
+                    ))}
+                  </div>
+                  {recentRecipes.length === 0 && (
+                    <p>You haven&apos;t viewed any recipes recently.</p>
+                  )}
+                </div>
+              </div>
+            </Tab>
+            <Tab key="search" title="Search Results">
+              <div>
+                <Divider className="bg-dark-green my-4"></Divider>
+                <h2 className="text-2xl md:text-3xl mb-3">Search Results</h2>
+                {isSearching ? (
+                  <p>Searching...</p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap -m-2">
+                      {searchResults.map((recipe) => (
+                        <RecipeCard key={recipe._id} recipe={recipe} />
+                      ))}
+                    </div>
+                    {searchResults.length === 0 && (
+                      <p>No recipes found. Try a different search term.</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </Tab>
 
-          <Tab key="pantry" title="Pantry Suggestions"></Tab>
-        </Tabs>
+            <Tab key="pantry" title="Pantry Suggestions"></Tab>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
