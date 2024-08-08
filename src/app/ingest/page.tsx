@@ -252,8 +252,8 @@ export default function Ingest() {
   return (
     <div className="bg-off-white min-h-screen flex flex-col text-green-text">
       <Navbar />
-      <div className="flex flex-col items-center min-h-[600px] overflow-auto">
-        <div className="bg-off-white border border-border-color w-1/2 my-12 flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center min-h-[600px] overflow-auto p-4 md:p-8">
+        <div className="bg-off-white border border-border-color w-full md:w-1/2 my-12 flex flex-col items-center justify-center p-4 md:p-8">
           <Input
             value={recipeUrl}
             onChange={handleInputChange}
@@ -263,25 +263,25 @@ export default function Ingest() {
             defaultValue="https://your-recipe-url-here.com"
             classNames={{
               label: "text-center font-thin w-full",
-              innerWrapper: "w-1/2 text-center items-center w-full",
+              innerWrapper: "w-full text-center items-center",
               inputWrapper: "text-center items-center w-full",
               input: "text-center items-center w-full",
-              base: "w-1/2",
+              base: "w-full",
             }}
           />
           <Button
-            className="my-8 bg-peach border border-dark-green font-thin"
+            className="my-8 bg-peach border border-dark-green font-thin w-full md:w-auto"
             radius="none"
             onClick={() => ingestRecipe(recipeUrl)}
             disabled={tokenStatus !== "valid"}
           >
             Extract Ingredients!
           </Button>
-          <div className="flex items-center">
+          <div className="flex flex-col md:flex-row items-center w-full justify-center space-x-2">
             <Select
               placeholder="Grocer"
               radius="none"
-              className="my-2 w-48"
+              className="my-2 w-full md:w-48"
               onChange={(value) => setGrocer(value.target.value)}
               value={grocer}
               aria-label="Grocer"
@@ -297,7 +297,7 @@ export default function Ingest() {
               ))}
             </Select>
             <Button
-              className="mx-4 bg-peach border border-dark-green font-thin"
+              className="mx-0 md:mx-4 my-2 md:my-0 bg-peach border border-dark-green font-thin w-full md:w-auto"
               radius="none"
               onClick={() => handleButtonClick()}
               disabled={tokenStatus === "loading"}
@@ -308,10 +308,11 @@ export default function Ingest() {
           </div>
         </div>
         {scrapedRecipe && (
-          <Card 
-          className="flex flex-col mx-10 mb-4 px-2 bg-off-white border border-border-green"
-          radius="none"
-          shadow="none">
+          <Card
+            className="flex flex-col mx-4 md:mx-10 mb-4 px-2 bg-off-white border border-border-green"
+            radius="none"
+            shadow="none"
+          >
             <CardBody className="text-green-text">
               <h2 className="text-xl font-bold">{scrapedRecipe.title}</h2>
               <p>{scrapedRecipe.description}</p>
@@ -330,130 +331,135 @@ export default function Ingest() {
             />
           </div>
         )}
-        {krogerFoodUpcs.map((upcs, arrayIndex) => (
-          <Card
-            key={arrayIndex}
-            radius="none"
-            shadow="none"
-            className="flex flex-col mx-10 mb-4 px-2 bg-off-white border border-border-green"
-          >
-            <h3 className="text-center text-green-text font-medium mb-4">
-              {upcs[0].item}
-            </h3>
-            <CardBody className="flex flex-row overflow-auto items-center justify-start flex-row pt-4">
-              {upcs.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center max-w-72 mb-4 mr-4 flex-shrink-0"
-                >
-                  <img
-                    src={item.thumbnailUrl}
-                    alt={item.item}
-                    className="mb-2"
-                    onClick={() => {
-                      const existingItem = selectedItems.find(
-                        (i) => i.upc === item.upc
-                      );
-
-                      if (existingItem) {
-                        // If the item already exists, increment its quantity
-                        const newItems = selectedItems.map((i) =>
-                          i.upc === item.upc
-                            ? { ...i, quantity: i.quantity + 1 }
-                            : i
+        <div className="flex overflow-x-auto w-full">
+          {krogerFoodUpcs.map((upcs, arrayIndex) => (
+            <Card
+              key={arrayIndex}
+              radius="none"
+              shadow="none"
+              className="flex flex-col mx-4 md:mx-10 mb-4 px-2 bg-off-white border border-border-green min-w-[300px]"
+            >
+              <h3 className="text-center text-green-text font-medium mb-4">
+                {upcs[0].item}
+              </h3>
+              <CardBody className="flex flex-wrap items-center justify-center pt-4">
+                {upcs.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col items-center max-w-72 mb-4 mr-4 flex-shrink-0"
+                  >
+                    <img
+                      src={item.thumbnailUrl}
+                      alt={item.item}
+                      className="mb-2"
+                      onClick={() => {
+                        const existingItem = selectedItems.find(
+                          (i) => i.upc === item.upc
                         );
-                        setSelectedItems(newItems);
-                      } else {
-                        // If the item doesn't exist, add it to the array
-                        setSelectedItems([
-                          ...selectedItems,
-                          { upc: item.upc, quantity: 1 },
-                        ]);
-                      }
-                    }}
-                  />
-                  <div className="text-center mx-6">
-                    <p className="mb-2">{item.description}</p>
-                    <p className="mb-2">{item.size}</p>
-                    {selectedItems.some((i) => i.upc === item.upc) && (
-                      <>
-                        <Button
-                          className="mx-2 bg-peach border border-dark-green font-thin"
-                          radius="none"
-                          size="sm"
-                          onClick={() => {
-                            const newItems = selectedItems.reduce<
-                              { upc: string; quantity: number }[]
-                            >((acc, i) => {
-                              if (i.upc === item.upc) {
-                                if (i.quantity > 1) {
-                                  acc.push({ ...i, quantity: i.quantity - 1 });
+
+                        if (existingItem) {
+                          // If the item already exists, increment its quantity
+                          const newItems = selectedItems.map((i) =>
+                            i.upc === item.upc
+                              ? { ...i, quantity: i.quantity + 1 }
+                              : i
+                          );
+                          setSelectedItems(newItems);
+                        } else {
+                          // If the item doesn't exist, add it to the array
+                          setSelectedItems([
+                            ...selectedItems,
+                            { upc: item.upc, quantity: 1 },
+                          ]);
+                        }
+                      }}
+                    />
+                    <div className="text-center mx-2 md:mx-6">
+                      <p className="mb-2">{item.description}</p>
+                      <p className="mb-2">{item.size}</p>
+                      {selectedItems.some((i) => i.upc === item.upc) && (
+                        <>
+                          <Button
+                            className="mx-2 bg-peach border border-dark-green font-thin"
+                            radius="none"
+                            size="sm"
+                            onClick={() => {
+                              const newItems = selectedItems.reduce<
+                                { upc: string; quantity: number }[]
+                              >((acc, i) => {
+                                if (i.upc === item.upc) {
+                                  if (i.quantity > 1) {
+                                    acc.push({
+                                      ...i,
+                                      quantity: i.quantity - 1,
+                                    });
+                                  }
+                                } else {
+                                  acc.push(i);
                                 }
-                              } else {
-                                acc.push(i);
-                              }
-                              return acc;
-                            }, []);
-                            setSelectedItems(newItems);
-                          }}
-                        >
-                          -
-                        </Button>
+                                return acc;
+                              }, []);
+                              setSelectedItems(newItems);
+                            }}
+                          >
+                            -
+                          </Button>
 
-                        <span>
-                          {selectedItems.find((i) => i.upc === item.upc)
-                            ?.quantity || 0}
-                        </span>
+                          <span>
+                            {selectedItems.find((i) => i.upc === item.upc)
+                              ?.quantity || 0}
+                          </span>
 
-                        <Button
-                          className="mx-2 bg-peach border border-dark-green font-thin"
-                          radius="none"
-                          size="sm"
-                          onClick={() => {
-                            const newItems = selectedItems.map((i) =>
-                              i.upc === item.upc
-                                ? { ...i, quantity: i.quantity + 1 }
-                                : i
-                            );
-                            setSelectedItems(newItems);
-                          }}
-                        >
-                          +
-                        </Button>
-                      </>
-                    )}
+                          <Button
+                            className="mx-2 bg-peach border border-dark-green font-thin"
+                            radius="none"
+                            size="sm"
+                            onClick={() => {
+                              const newItems = selectedItems.map((i) =>
+                                i.upc === item.upc
+                                  ? { ...i, quantity: i.quantity + 1 }
+                                  : i
+                              );
+                              setSelectedItems(newItems);
+                            }}
+                          >
+                            +
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
+                ))}
+                <div className="flex justify-end items-center ml-4">
+                  <Button
+                    className="mx-2 bg-peach border border-dark-green font-thin"
+                    radius="none"
+                    size="sm"
+                    onClick={() => {
+                      const removedItems = krogerFoodUpcs[arrayIndex];
+                      setKrogerFoodUpcs((prevState) =>
+                        prevState.filter((_, i) => i !== arrayIndex)
+                      );
+                      setSelectedItems((prevState) =>
+                        prevState.filter(
+                          (item) =>
+                            !removedItems.some(
+                              (removedItem) => removedItem.upc === item.upc
+                            )
+                        )
+                      );
+                    }}
+                  >
+                    x
+                  </Button>
                 </div>
-              ))}
-              <div className="flex justify-end items-center ml-4">
-                <Button
-                  className="mx-2 bg-peach border border-dark-green font-thin"
-                  radius="none"
-                  size="sm"
-                  onClick={() => {
-                    const removedItems = krogerFoodUpcs[arrayIndex];
-                    setKrogerFoodUpcs((prevState) =>
-                      prevState.filter((_, i) => i !== arrayIndex)
-                    );
-                    setSelectedItems((prevState) =>
-                      prevState.filter(
-                        (item) =>
-                          !removedItems.some(
-                            (removedItem) => removedItem.upc === item.upc
-                          )
-                      )
-                    );
-                  }}
-                >
-                  x
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
-        ))}
+              </CardBody>
+            </Card>
+          ))}
+        </div>
         {krogerFoodUpcs.length > 0 && (
           <Button
-            className="my-8 bg-peach border border-dark-green font-thin"
+            className="my-8 bg-peach border border-dark-green font-thin w-full md:w-auto"
             radius="none"
             isDisabled={selectedItems.length === 0}
             onClick={() => {
@@ -468,7 +474,7 @@ export default function Ingest() {
         )}
         {selectedItems.length > 0 && (
           <Button
-            className="my-8 bg-peach border border-dark-green font-thin"
+            className="my-8 bg-peach border border-dark-green font-thin w-full md:w-auto"
             radius="none"
             onClick={() => {
               setSelectedItems([]);
