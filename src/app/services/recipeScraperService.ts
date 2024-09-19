@@ -23,7 +23,7 @@ export interface ScrapedRecipe {
 export class RecipeScraperService {
   private apiUrl: string;
 
-  constructor(apiUrl: string = 'http://localhost:3333') {
+  constructor(apiUrl: string = 'http://127.0.0.1:5000') {
     this.apiUrl = apiUrl;
   }
 
