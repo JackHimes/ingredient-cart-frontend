@@ -212,7 +212,7 @@ export default function Ingest() {
           },
         }
       );
-      console.log(response.data);
+      console.log("Response from cart add:", response.data);
     } catch (error: any) {
       console.error("Error adding to cart: ", error.message);
     }
