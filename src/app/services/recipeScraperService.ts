@@ -20,6 +20,12 @@ export interface ScrapedRecipe {
   yields: string;
 }
 
+export interface ProcessedIngredients {
+  [line: string]: {
+    [label: string]: string[];
+  };
+}
+
 export class RecipeScraperService {
   private apiUrl: string;
 
@@ -32,13 +38,23 @@ export class RecipeScraperService {
       const response = await axios.get(`${this.apiUrl}/tasks/scrape_recipe`, {
         params: { recipeUrl: url },
       });
-
       console.log('Scraped recipe:', response.data.result);
-      
       return response.data.result;
     } catch (error) {
       console.error('Error scraping recipe:', error);
       throw new Error('Failed to scrape recipe');
+    }
+  }
+
+  async scrapeIngredientsWithNER(url: string): Promise<ProcessedIngredients> {
+    try {
+      const response = await axios.post(`${this.apiUrl}/api/scrape-ingredients-ner`, {
+        url,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error scraping ingredients with NER:', error);
+      throw new Error('Failed to scrape ingredients with NER');
     }
   }
 }

@@ -59,9 +59,10 @@ export default function RecipeDetail({ params }: RecipeDetailProps) {
 
 
   const handleAddToCart = () => {
-    if (!recipe) return;
-    const encodedIngredients = encodeURIComponent(JSON.stringify(recipe.ingredients));
-    router.push(`/ingest?ingredients=${encodedIngredients}`);
+    if (!recipe || !recipe.url) return;
+    
+    const encodedUrl = encodeURIComponent(recipe.url);
+    router.push(`/ingest?url=${encodedUrl}`);
   };
 
   const handleToggleFavorite = async () => {
