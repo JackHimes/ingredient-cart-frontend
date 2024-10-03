@@ -85,16 +85,6 @@ export default function Ingest() {
   >("loading");
 
   useEffect(() => {
-    const encodedIngredients = searchParams.get("ingredients");
-    if (encodedIngredients) {
-      const decodedIngredients = JSON.parse(
-        decodeURIComponent(encodedIngredients)
-      );
-      processIngredients(decodedIngredients);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
     const initializeToken = async () => {
       if (user?.emailAddresses[0].emailAddress) {
         setTokenStatus("loading");
@@ -125,81 +115,66 @@ export default function Ingest() {
     initializeToken();
   }, [user]);
 
-  const processIngredients = useCallback(
-    async (ingredientsList: string[]) => {
-      setKrogerFoodUpcs([]);
-      setSelectedItems([]);
-      setIsLoading(true);
-
-      try {
-        await waitForToken();
-        const currentToken = await ensureToken(
-          user?.emailAddresses[0].emailAddress || ""
-        );
-
-        if (!currentToken) {
-          throw new Error("Token not available");
-        }
-
-        const upcs = await getItemsUpcs(ingredientsList, currentToken);
-        console.log(upcs);
-
-        setKrogerFoodUpcs(upcs);
-      } catch (error: any) {
-        console.error("Error processing ingredients:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [user]
-  );
-
   const ingestRecipe = useCallback(
     async (url: string) => {
       setKrogerFoodUpcs([]);
       setSelectedItems([]);
       setIsLoading(true);
       setError(null);
-
+  
       try {
-        const scrapedRecipe = await recipeScraperService.scrapeRecipe(url);
-        setScrapedRecipe(scrapedRecipe);
-
-        if (
-          !scrapedRecipe.ingredients ||
-          scrapedRecipe.ingredients.length === 0
-        ) {
+        const processedIngredients = await recipeScraperService.scrapeIngredientsWithNER(url);
+  
+        if (!processedIngredients || Object.keys(processedIngredients).length === 0) {
           throw new Error("No ingredients found in the recipe");
         }
-
-        // Wait for token to be available
+  
+        console.log("Processed ingredients:", processedIngredients);
+  
+        const ingredientLines: string[] = [];
+  
+        Object.values(processedIngredients).forEach((item) => {
+          const ingredientData = item.Ingredient;
+  
+          if (!ingredientData) return;
+  
+          if (Array.isArray(ingredientData)) {
+            ingredientLines.push(...ingredientData);
+          } else if (typeof ingredientData === 'string') {
+            ingredientLines.push(ingredientData);
+          }
+        });
+  
+        console.log("Extracted ingredient lines:", ingredientLines);
+  
         await waitForToken();
-        const currentToken = await ensureToken(
-          user?.emailAddresses[0].emailAddress || ""
-        );
-
+        const currentToken = await ensureToken(user?.emailAddresses[0].emailAddress || "");
+  
         if (!currentToken) {
           throw new Error("Token not available");
         }
-
-        const upcs = await getItemsUpcs(
-          scrapedRecipe.ingredients,
-          currentToken
-        );
+  
+        const upcs = await getItemsUpcs(ingredientLines, currentToken);
         console.log(upcs);
-
+  
         setKrogerFoodUpcs(upcs);
       } catch (error: any) {
         console.error("Error Ingesting Recipe:", error);
-        setError(
-          error.message || "An error occurred while ingesting the recipe"
-        );
+        setError(error.message || "An error occurred while ingesting the recipe");
       } finally {
         setIsLoading(false);
       }
     },
     [user]
   );
+
+    // Automatically call ingestRecipe when the page loads and a URL is present in the query params
+    useEffect(() => {
+      const recipeUrlFromParams = searchParams.get("url");
+      if (recipeUrlFromParams) {
+        ingestRecipe(decodeURIComponent(recipeUrlFromParams));
+      }
+    }, [searchParams, ingestRecipe]);  
 
   const addToCart = async (items: { upc: string; quantity: number }[]) => {
     try {
@@ -307,20 +282,6 @@ export default function Ingest() {
             <TokenStatusIndicator status={tokenStatus} />
           </div>
         </div>
-        {scrapedRecipe && (
-          <Card
-            className="flex flex-col mx-4 md:mx-10 mb-4 px-2 bg-off-white border border-border-green"
-            radius="none"
-            shadow="none"
-          >
-            <CardBody className="text-green-text">
-              <h2 className="text-xl font-bold">{scrapedRecipe.title}</h2>
-              <p>{scrapedRecipe.description}</p>
-              <p>Cuisine: {scrapedRecipe.cuisine}</p>
-              <p>Total Time: {scrapedRecipe.total_time} minutes</p>
-            </CardBody>
-          </Card>
-        )}
         {isLoading && (
           <div className="top-0 left-0 right-0 bottom-0 flex items-center justify-center">
             <Spinner
