@@ -66,7 +66,7 @@ export default function Footer() {
           <div className="flex mt-4">
             <Button className="bg-transparent">
               <Image
-                src="/facebook-logo.png"
+                src="/facebook-logo.webp"
                 alt="Facebook Icon"
                 width={24}
                 height={24}
@@ -74,14 +74,14 @@ export default function Footer() {
             </Button>
             <Button className="bg-transparent">
               <Image
-                src="/instagram-logo.png"
+                src="/instagram-logo.webp"
                 alt="Instagram Icon"
                 width={24}
                 height={24}
               />
             </Button>
             <Button className="bg-transparent">
-              <Image src="/x-logo.png" alt="X Icon" width={24} height={24} />
+              <Image src="/x-logo.webp" alt="X Icon" width={24} height={24} />
             </Button>
           </div>
         </div>

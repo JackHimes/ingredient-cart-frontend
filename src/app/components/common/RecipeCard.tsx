@@ -13,7 +13,7 @@ export default function RecipeCard({ recipe }: { recipe: Recipe}) {
       </div>
       <div className="flex-initial pl-4 mt-4 md:mt-0">
         <img
-          src={recipe.image || "/recipes-page.jpg"}
+          src={recipe.image || "/recipes-page.webp"}
           className="w-full max-w-[150px] h-auto"
           alt="recipe image"
         />

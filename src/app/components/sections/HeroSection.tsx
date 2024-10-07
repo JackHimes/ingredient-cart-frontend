@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@nextui-org/react";
-import ParallaxBannerComponent from "../common/ParallaxBannerComponent";
+// import ParallaxBannerComponent from "../common/ParallaxBannerComponent";
 import Link from "next/link";
 
 export default function HeroSection() {
@@ -19,7 +19,7 @@ export default function HeroSection() {
           Add Ingredients
         </Button>
       </Link>
-      <ParallaxBannerComponent />
+      {/* <ParallaxBannerComponent /> */}
     </div>
   );
 }

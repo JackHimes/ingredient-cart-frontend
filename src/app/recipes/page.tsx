@@ -130,7 +130,7 @@ export default function Page() {
       <Navbar />
       <div className="relative w-full h-64 overflow-hidden">
         <Image
-          src="/recipes-page.jpg"
+          src="/recipes-page.webp"
           layout="fill"
           objectFit="cover"
           objectPosition="center 20%"
