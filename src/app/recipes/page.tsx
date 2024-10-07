@@ -155,7 +155,7 @@ export default function Page() {
 
         <RecipeSearchBar onSearch={handleSearch} />
 
-        <div className="flex flex-wrap">
+        <div>
           <Tabs
             variant="underlined"
             classNames={{ tabList: "flex-wrap", tab: "flex-1 min-w-[120px] text-center" }}
@@ -174,13 +174,9 @@ export default function Page() {
               </div>
             </Tab>
             <Tab key="your" title="Your Recipes">
-              <div className="flex flex-col md:flex-row text-xl">
-                <p className="mb-2 md:mb-0">Favorites</p>
-                <p className="px-0 md:px-4">Recents</p>
-              </div>
-              <Divider className="bg-dark-green my-4"></Divider>
-              <div>
-                <div>
+              <div className="flex flex-col">
+                <Divider className="bg-dark-green my-4"></Divider>
+                <div className="mb-8">
                   <h1 className="text-2xl md:text-3xl mb-3">Favorite Recipes</h1>
                   <div className="flex flex-wrap -m-2">
                     {favoriteRecipes.map((recipe) => (

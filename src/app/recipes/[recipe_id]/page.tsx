@@ -103,13 +103,13 @@ export default function RecipeDetail({ params }: RecipeDetailProps) {
     <div className="bg-off-white">
       <Navbar />
       <div className="p-10">
-        <h1 className="text-5xl font-thin text-green-text">{recipe.title}</h1>
+        <h1 className="text-5xl font-thin mb-6 text-green-text">{recipe.title}</h1>
         <img
           src={recipe.image}
           alt="Description"
-          style={{ width: "500px", height: "300px" }}
+          className="w-full h-auto max-w-md object-contain"
         />{" "}
-        <p className="text-lg my-4 font-thin text-green-text">{recipe.url}</p>
+        <a href={recipe.url} target="_blank"><p className="text-lg my-4 font-thin text-green-text">Original Recipe</p></a>
         {recipe.description && (
           <p className="text-lg my-4 font-thin text-green-text">{recipe.description}</p>
         )}
@@ -128,13 +128,16 @@ export default function RecipeDetail({ params }: RecipeDetailProps) {
                 isFavorite
                   ? "bg-green-text text-peach"
                   : "bg-peach text-green-text"
-              } border border-dark-green`}
+              } 
+              border border-dark-green
+              mx-3`
+              }
               radius="none"
             >
               {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
             </Button>
           )}
-          <h2 className="text-2xl font-medium text-green-text">Ingredients</h2>
+          <h2 className="text-2xl font-medium mt-2 text-green-text">Ingredients</h2>
           <ul className="text-green-text">
             {recipe.ingredients.map((ingredient, index) => (
               <li key={index}>{ingredient}</li>
