@@ -15,12 +15,13 @@ export default function Recipes() {
           </h1>
         </div>
         <div className="flex flex-col md:flex-row justify-between space-y-8 md:space-y-0 md:space-x-8">
+        <Link href="/recipes/66fec7f1c0970a04390e366a" passHref>
           <div className="flex flex-col items-start p-4 w-full md:w-auto">
             <Image
-              src="/pizza.jpg"
+              src="/pizza.webp"
               alt="Recipe 2"
-              width={250} // Adjusted width
-              height={175} // Adjusted height
+              width={250} 
+              height={175}
               className="w-full h-auto"
             />
             <h1 className="text-xl text-green-text font-medium my-4 md:my-8">
@@ -32,12 +33,14 @@ export default function Recipes() {
               pizza tonight?
             </p>
           </div>
+        </Link>
+        <Link href="/recipes/66fecccbc0970a04390e366b" passHref>
           <div className="flex flex-col items-start p-4 w-full md:w-auto">
             <Image
-              src="/tsao-chicken.jpg"
+              src="/tsao-chicken.webp"
               alt="Recipe 1"
-              width={250} // Adjusted width
-              height={175} // Adjusted height
+              width={250}
+              height={175}
               className="w-full h-auto"
             />
             <h1 className="text-xl text-green-text font-medium my-4 md:my-8">
@@ -50,12 +53,15 @@ export default function Recipes() {
               that turns up the heat.
             </p>
           </div>
+          </Link>
+
+          <Link href="/recipes/66fecd9ac0970a04390e366c" passHref>
           <div className="flex flex-col items-start p-4 w-full md:w-auto">
             <Image
-              src="/salad.jpg"
+              src="/salad.webp"
               alt="Recipe 3"
-              width={250} // Adjusted width
-              height={175} // Adjusted height
+              width={250}
+              height={175}
               className="w-full h-auto"
             />
             <h1 className="text-xl text-green-text font-medium my-4 md:my-8">
@@ -67,6 +73,7 @@ export default function Recipes() {
               to a main dish or even better as a meal of its own.
             </p>
           </div>
+          </Link>
         </div>
         <Link href="/recipes">
           <Button
