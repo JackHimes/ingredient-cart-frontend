@@ -214,13 +214,10 @@ export default function Ingest() {
   };
 
   const handleButtonClick = async () => {
-    const storedTokenString = localStorage.getItem("customer_access_token");
-    if (!storedTokenString) {
-      console.log("No token found, fetching new one");
+    // tokenStatus already reflects the backend check, so anything stored locally is stale here
+    if (tokenStatus === "invalid") {
+      localStorage.removeItem("customer_access_token");
       await openKrogerAuth();
-    } else {
-      console.log("Using Locally Stored Token");
-      const storedTokenObject = JSON.parse(storedTokenString);
     }
   };
 

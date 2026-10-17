@@ -29,7 +29,10 @@ const useStoreUser = () => {
           console.log("User stored successfully!", JSON.stringify(response.data, null, 2));
           setUserDataStored(true);
         } catch (error) {
-          if (axios.isAxiosError(error)) {
+          if (axios.isAxiosError(error) && error.response?.data?.name === "DuplicateEmail") {
+            // User was already stored on a previous visit
+            setUserDataStored(true);
+          } else if (axios.isAxiosError(error)) {
             console.error("Error storing user:", error.response?.data || error.message);
             console.error("Error status:", error.response?.status);
             console.error("Error headers:", error.response?.headers);
