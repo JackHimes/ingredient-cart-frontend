@@ -41,7 +41,7 @@ export default function NewRecipe() {
       
       // Optional fields
       setDescription(scrapedRecipe.description || '');
-      setUrl(scrapedRecipe.canonical_url || '');
+      setUrl(scrapeUrl|| '');
       setImage(scrapedRecipe.image || '');
       setAuthor(scrapedRecipe.author || '');
       setCategory(scrapedRecipe.category || '');
@@ -85,6 +85,14 @@ export default function NewRecipe() {
       };
 
       const response = await axios.post('http://localhost:3333/recipes', recipeData);
+      const newRecipeId = response.data._id;
+
+      const userEmail = user.primaryEmailAddress?.emailAddress;
+      if (userEmail) {
+        // Add to recent recipes
+        await axios.post(`http://localhost:3333/users/${encodeURIComponent(userEmail)}/recent/${newRecipeId}`);
+      }
+
       router.push(`/recipes/${response.data._id}`);
     } catch (error) {
       console.error("Error adding new recipe:", error);

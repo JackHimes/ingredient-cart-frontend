@@ -26,7 +26,8 @@ const ensureToken = async (userEmail: string) => {
     try {
       const parsedToken = JSON.parse(localStoredToken);
       if (typeof parsedToken !== 'string') {
-        console.error("Stored token is not a string:", parsedToken);
+        // Older format stored the whole Kroger response object; drop it and ask the backend
+        localStorage.removeItem("customer_access_token");
         return await fetchTokenFromBackend(userEmail);
       }
       if (isTokenExpired(parsedToken)) {

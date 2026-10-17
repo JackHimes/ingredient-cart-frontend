@@ -29,7 +29,7 @@ export interface ProcessedIngredients {
 export class RecipeScraperService {
   private apiUrl: string;
 
-  constructor(apiUrl: string = 'http://127.0.0.1:5000') {
+  constructor(apiUrl: string = 'http://0.0.0.0:8000') {
     this.apiUrl = apiUrl;
   }
 

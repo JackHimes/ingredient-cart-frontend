@@ -5,7 +5,7 @@ export default function IngredientCartLogo() {
     <div className='mt-4 mb-2 flex justify-center items-center'>
       <Image
         priority
-        src={'/ingredient-cart-logo.png'}
+        src={'/ingredient-cart-logo.webp'}
         alt="Ingredient Cart Logo"
         width={150} 
         height={150}

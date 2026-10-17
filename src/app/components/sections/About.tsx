@@ -11,7 +11,7 @@ export default function About() {
           </h1>
           <Image
             className="mt-8 md:mt-44"
-            src="/about-section-cooking.jpg"
+            src="/about-section-cooking.webp"
             alt="Cooking"
             width={416}
             height={515}
@@ -27,7 +27,7 @@ export default function About() {
           </p>
           <Image
             className="mt-8 md:mt-56"
-            src="/about-section-bagged-food.jpg"
+            src="/about-section-bagged-food.webp"
             alt="Bagged Food"
             width={335}
             height={400}
@@ -38,7 +38,7 @@ export default function About() {
       <div className="pt-12 md:pt-44 flex flex-col md:flex-row justify-between">
         <div className="flex flex-col items-center w-full md:w-48 mb-8 md:mb-0 px-2">
           <Image
-            src="/recipe.png"
+            src="/recipe.webp"
             alt="Vegatable Icon"
             width={130}
             height={122}
@@ -53,7 +53,7 @@ export default function About() {
         </div>
         <div className="flex flex-col items-center w-full md:w-48 mb-8 md:mb-0 px-2">
           <Image
-            src="/vegetables.png"
+            src="/vegetables.webp"
             alt="Vegatable Icon"
             width={130}
             height={122}
@@ -69,7 +69,7 @@ export default function About() {
         </div>
         <div className="flex flex-col items-center w-full md:w-48 mb-8 md:mb-0 px-2">
           <Image
-            src="/box-car.png"
+            src="/box-car.webp"
             alt="Vegatable Icon"
             width={130}
             height={122}
@@ -85,7 +85,7 @@ export default function About() {
         </div>
         <div className="flex flex-col items-center w-full md:w-48 px-2">
           <Image
-            src="/cooking.png"
+            src="/cooking.webp"
             alt="Vegatable Icon"
             width={130}
             height={122}
