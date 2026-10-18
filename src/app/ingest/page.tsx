@@ -2,8 +2,6 @@
 
 import {
   Button,
-  Card,
-  CardBody,
   Select,
   SelectItem,
   Input,
@@ -19,6 +17,16 @@ import { useSearchParams } from "next/navigation";
 import { getItemsUpcs } from "../services/productService";
 import { waitForToken, ensureToken } from "../services/tokenService";
 import TokenStatusIndicator from "../components/common/TokenStatusIndicator";
+import StoreSelector from "../components/common/StoreSelector";
+import IngredientStack, {
+  ProductOption,
+  SelectedItem,
+} from "../components/common/IngredientStack";
+import {
+  getStoredStore,
+  saveStore,
+  KrogerStore,
+} from "../services/storeService";
 import recipeScraperService, {
   ScrapedRecipe,
 } from "../services/recipeScraperService";
@@ -42,16 +50,16 @@ const retry = async <T,>(
   }
 };
 
+// Mirrors how the backend's getItemsUpcs rewrites each search term, so we can
+// match the `item` it returns back to the ingredient we sent.
+const toSearchTerm = (ingredient: string) =>
+  ingredient.replace(/[()]/g, "").split(" ").slice(0, 8).join(" ");
+
+const formatItemName = (item: string, amount?: string) =>
+  amount ? `${item} (${amount})` : item;
+
 export default function Ingest() {
   let scrappedFoods: string[] = [];
-  type Item = {
-    item: string;
-    upc: string;
-    description?: string;
-    size?: string;
-    thumbnailUrl?: string;
-  };
-
   type GrocerSelectItem = {
     label: string;
     value: string;
@@ -66,12 +74,14 @@ export default function Ingest() {
     },
   ];
 
-  const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<Item[][]>([]);
+  const [krogerFoodUpcs, setKrogerFoodUpcs] = useState<ProductOption[][]>([]);
+  // Recipe quantity + unit (e.g. "3 cloves"), keyed by search term
+  const [recipeAmounts, setRecipeAmounts] = useState<Record<string, string>>(
+    {}
+  );
   const [recipeUrl, setRecipeUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<
-    { upc: string; quantity: number }[]
-  >([]);
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [grocer, setGrocer] = useState("");
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -83,6 +93,16 @@ export default function Ingest() {
   const [tokenStatus, setTokenStatus] = useState<
     "loading" | "valid" | "invalid"
   >("loading");
+  const [store, setStore] = useState<KrogerStore | null>(null);
+
+  useEffect(() => {
+    setStore(getStoredStore());
+  }, []);
+
+  const handleStoreChange = (newStore: KrogerStore) => {
+    saveStore(newStore);
+    setStore(newStore);
+  };
 
   useEffect(() => {
     const initializeToken = async () => {
@@ -117,7 +137,13 @@ export default function Ingest() {
 
   const ingestRecipe = useCallback(
     async (url: string) => {
+      if (!store) {
+        setError("Select a store before extracting ingredients");
+        return;
+      }
+
       setKrogerFoodUpcs([]);
+      setRecipeAmounts({});
       setSelectedItems([]);
       setIsLoading(true);
       setError(null);
@@ -132,20 +158,28 @@ export default function Ingest() {
         console.log("Processed ingredients:", processedIngredients);
   
         const ingredientLines: string[] = [];
-  
+        const amounts: Record<string, string> = {};
+
         Object.values(processedIngredients).forEach((item) => {
           const ingredientData = item.Ingredient;
-  
+
           if (!ingredientData) return;
-  
-          if (Array.isArray(ingredientData)) {
-            ingredientLines.push(...ingredientData);
-          } else if (typeof ingredientData === 'string') {
-            ingredientLines.push(ingredientData);
-          }
+
+          const ingredients = Array.isArray(ingredientData)
+            ? ingredientData
+            : [ingredientData];
+          const amount = [...(item.Quantity ?? []), ...(item.Unit ?? [])]
+            .join(" ")
+            .trim();
+
+          ingredients.forEach((ingredient) => {
+            ingredientLines.push(ingredient);
+            if (amount) amounts[toSearchTerm(ingredient)] = amount;
+          });
         });
-  
+
         console.log("Extracted ingredient lines:", ingredientLines);
+        setRecipeAmounts(amounts);
   
         await waitForToken();
         const currentToken = await ensureToken(user?.emailAddresses[0].emailAddress || "");
@@ -154,7 +188,11 @@ export default function Ingest() {
           throw new Error("Token not available");
         }
   
-        const upcs = await getItemsUpcs(ingredientLines, currentToken);
+        const upcs = await getItemsUpcs(
+          ingredientLines,
+          store.locationId,
+          currentToken
+        );
         console.log(upcs);
   
         setKrogerFoodUpcs(upcs);
@@ -165,18 +203,18 @@ export default function Ingest() {
         setIsLoading(false);
       }
     },
-    [user]
+    [user, store]
   );
 
     // Automatically call ingestRecipe when the page loads and a URL is present in the query params
     useEffect(() => {
       const recipeUrlFromParams = searchParams.get("url");
-      if (recipeUrlFromParams) {
+      if (recipeUrlFromParams && store) {
         ingestRecipe(decodeURIComponent(recipeUrlFromParams));
       }
-    }, [searchParams, ingestRecipe]);  
+    }, [searchParams, store, ingestRecipe]);  
 
-  const addToCart = async (items: { upc: string; quantity: number }[]) => {
+  const addToCart = async (items: SelectedItem[]) => {
     try {
       const response = await axios.post(
         "http://localhost:3333/api/cart/add",
@@ -245,7 +283,7 @@ export default function Ingest() {
             className="my-8 bg-peach border border-dark-green font-thin w-full md:w-auto"
             radius="none"
             onClick={() => ingestRecipe(recipeUrl)}
-            disabled={tokenStatus !== "valid"}
+            disabled={tokenStatus !== "valid" || !store}
           >
             Extract Ingredients!
           </Button>
@@ -278,6 +316,12 @@ export default function Ingest() {
             </Button>
             <TokenStatusIndicator status={tokenStatus} />
           </div>
+          <StoreSelector
+            token={token}
+            isTokenValid={tokenStatus === "valid"}
+            store={store}
+            onStoreChange={handleStoreChange}
+          />
         </div>
         {isLoading && (
           <div className="top-0 left-0 right-0 bottom-0 flex items-center justify-center">
@@ -289,132 +333,16 @@ export default function Ingest() {
             />
           </div>
         )}
-        <div className="flex overflow-x-auto w-full">
-          {krogerFoodUpcs.map((upcs, arrayIndex) => (
-            <Card
-              key={arrayIndex}
-              radius="none"
-              shadow="none"
-              className="flex flex-col mx-4 md:mx-10 mb-4 px-2 bg-off-white border border-border-green min-w-[300px]"
-            >
-              <h3 className="text-center text-green-text font-medium mb-4">
-                {upcs[0].item}
-              </h3>
-              <CardBody className="flex flex-wrap items-center justify-center pt-4">
-                {upcs.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center max-w-72 mb-4 mr-4 flex-shrink-0"
-                  >
-                    <img
-                      src={item.thumbnailUrl}
-                      alt={item.item}
-                      className="mb-2"
-                      onClick={() => {
-                        const existingItem = selectedItems.find(
-                          (i) => i.upc === item.upc
-                        );
-
-                        if (existingItem) {
-                          // If the item already exists, increment its quantity
-                          const newItems = selectedItems.map((i) =>
-                            i.upc === item.upc
-                              ? { ...i, quantity: i.quantity + 1 }
-                              : i
-                          );
-                          setSelectedItems(newItems);
-                        } else {
-                          // If the item doesn't exist, add it to the array
-                          setSelectedItems([
-                            ...selectedItems,
-                            { upc: item.upc, quantity: 1 },
-                          ]);
-                        }
-                      }}
-                    />
-                    <div className="text-center mx-2 md:mx-6">
-                      <p className="mb-2">{item.description}</p>
-                      <p className="mb-2">{item.size}</p>
-                      {selectedItems.some((i) => i.upc === item.upc) && (
-                        <>
-                          <Button
-                            className="mx-2 bg-peach border border-dark-green font-thin"
-                            radius="none"
-                            size="sm"
-                            onClick={() => {
-                              const newItems = selectedItems.reduce<
-                                { upc: string; quantity: number }[]
-                              >((acc, i) => {
-                                if (i.upc === item.upc) {
-                                  if (i.quantity > 1) {
-                                    acc.push({
-                                      ...i,
-                                      quantity: i.quantity - 1,
-                                    });
-                                  }
-                                } else {
-                                  acc.push(i);
-                                }
-                                return acc;
-                              }, []);
-                              setSelectedItems(newItems);
-                            }}
-                          >
-                            -
-                          </Button>
-
-                          <span>
-                            {selectedItems.find((i) => i.upc === item.upc)
-                              ?.quantity || 0}
-                          </span>
-
-                          <Button
-                            className="mx-2 bg-peach border border-dark-green font-thin"
-                            radius="none"
-                            size="sm"
-                            onClick={() => {
-                              const newItems = selectedItems.map((i) =>
-                                i.upc === item.upc
-                                  ? { ...i, quantity: i.quantity + 1 }
-                                  : i
-                              );
-                              setSelectedItems(newItems);
-                            }}
-                          >
-                            +
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div className="flex justify-end items-center ml-4">
-                  <Button
-                    className="mx-2 bg-peach border border-dark-green font-thin"
-                    radius="none"
-                    size="sm"
-                    onClick={() => {
-                      const removedItems = krogerFoodUpcs[arrayIndex];
-                      setKrogerFoodUpcs((prevState) =>
-                        prevState.filter((_, i) => i !== arrayIndex)
-                      );
-                      setSelectedItems((prevState) =>
-                        prevState.filter(
-                          (item) =>
-                            !removedItems.some(
-                              (removedItem) => removedItem.upc === item.upc
-                            )
-                        )
-                      );
-                    }}
-                  >
-                    x
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
+        {krogerFoodUpcs.length > 0 && (
+          <IngredientStack
+            groups={krogerFoodUpcs}
+            getTitle={(group) =>
+              formatItemName(group[0].item, recipeAmounts[group[0].item])
+            }
+            selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems}
+          />
+        )}
         {krogerFoodUpcs.length > 0 && (
           <Button
             className="my-8 bg-peach border border-dark-green font-thin w-full md:w-auto"

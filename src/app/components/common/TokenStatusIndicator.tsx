@@ -5,15 +5,24 @@ type TokenStatus = 'loading' | 'valid' | 'invalid';
 
 interface TokenStatusIndicatorProps {
   status: TokenStatus;
+  messages?: Partial<Record<TokenStatus, string>>;
 }
 
-const TokenStatusIndicator: React.FC<TokenStatusIndicatorProps> = ({ status }) => {
+const defaultMessages: Record<TokenStatus, string> = {
+  loading: "Checking token status...",
+  valid: "Your token is valid. You can proceed with ingredient extraction.",
+  invalid: "Your token is invalid or has expired. Please authenticate to continue.",
+};
+
+const TokenStatusIndicator: React.FC<TokenStatusIndicatorProps> = ({ status, messages }) => {
+  const content = { ...defaultMessages, ...messages };
+
   const renderContent = () => {
     switch (status) {
       case 'loading':
         return (
           <Tooltip 
-            content="Checking token status..." 
+            content={content.loading}
             classNames={{
               content: ["text-green-text"]
             }}
@@ -26,7 +35,7 @@ const TokenStatusIndicator: React.FC<TokenStatusIndicatorProps> = ({ status }) =
       case 'valid':
         return (
           <Tooltip 
-            content="Your token is valid. You can proceed with ingredient extraction." 
+            content={content.valid}
             classNames={{
               content: ["text-green-text"]
             }}
@@ -41,7 +50,7 @@ const TokenStatusIndicator: React.FC<TokenStatusIndicatorProps> = ({ status }) =
       case 'invalid':
         return (
           <Tooltip 
-            content="Your token is invalid or has expired. Please authenticate to continue." 
+            content={content.invalid}
             classNames={{
               content: ["text-green-text"]
             }}
