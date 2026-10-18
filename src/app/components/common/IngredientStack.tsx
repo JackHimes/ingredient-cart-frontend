@@ -10,7 +10,11 @@ export type ProductOption = {
   description?: string;
   size?: string;
   thumbnailUrl?: string;
+  price?: number;
+  promoPrice?: number;
 };
+
+const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
 export type SelectedItem = { upc: string; quantity: number };
 
@@ -235,6 +239,23 @@ const IngredientStack: React.FC<IngredientStackProps> = ({
                           onClick={() => changeQuantity(product.upc, 1)}
                         />
                         <p className="mb-1 text-sm">{product.description}</p>
+                        {product.price !== undefined && (
+                          <p className="mb-1 text-sm font-medium">
+                            {product.promoPrice !== undefined &&
+                            product.promoPrice < product.price ? (
+                              <>
+                                <span className="text-peach">
+                                  {formatPrice(product.promoPrice)}
+                                </span>{" "}
+                                <span className="font-thin line-through">
+                                  {formatPrice(product.price)}
+                                </span>
+                              </>
+                            ) : (
+                              formatPrice(product.price)
+                            )}
+                          </p>
+                        )}
                         <p className="mb-2 text-sm font-thin">{product.size}</p>
                         {quantity > 0 ? (
                           <div className="flex items-center">
