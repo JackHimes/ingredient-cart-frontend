@@ -10,9 +10,9 @@ export const fetchProducts = async (queryParams: any) => {
   }
 };
 
-export const getItemsUpcs = async (items: string[], token: string): Promise<any> => {
+export const getItemsUpcs = async (items: string[], locationId: string, token: string): Promise<any> => {
     try {
-      const response = await axios.post('http://localhost:3333/api/products/getItemsUpcs', { items }, {
+      const response = await axios.post('http://localhost:3333/api/products/getItemsUpcs', { items, locationId }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
