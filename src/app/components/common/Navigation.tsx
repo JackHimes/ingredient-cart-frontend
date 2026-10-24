@@ -41,6 +41,11 @@ export default function Navigation() {
             Recipes
           </Link>
         </NavbarItem>
+        <NavbarItem>
+          <Link className="font-thin" color="foreground" href="../pantry">
+            Pantry
+          </Link>
+        </NavbarItem>
       </NavbarContent>
 
       <NavbarBrand className="basis-1/3 flex justify-center">
